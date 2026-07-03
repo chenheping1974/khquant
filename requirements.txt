@@ -1,0 +1,30 @@
+# Core
+numpy
+pandas
+pyarrow
+scipy
+
+# Data Sources
+akshare
+yfinance
+
+# ML
+lightgbm
+scikit-learn
+
+# Backtesting
+vectorbt
+
+# Storage
+boto3
+python-dotenv
+
+# Utils
+tqdm
+joblib
+matplotlib
+plotly
+
+# Dev (local only, optional)
+# jupyter
+# ipywidgets

@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual env
+.venv/
+venv/
+env/
+
+# Data — 当前用Git存储 (215MB)，将来可切R2
+# data/
+
+# R2 本地缓存 (切换R2时生效)
+.r2_cache/
+
+# Results
+results/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+pipeline.log
+
+# Secrets
+.env
+.env.local
+secrets.json
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Cache
+.cache/
+*.cache
+
+# Data — 在独立仓库 khquant-data
+data/
