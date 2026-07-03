@@ -5,10 +5,13 @@
     "short_reversal",
     "momentum_12m1m",
     "low_volatility",
-    "amihud"
+    "amihud",
+    "size",
+    "value_ep",
+    "quality"
   ],
-  "n_features": 5,
-  "n_estimators": 1,
+  "n_features": 8,
+  "n_estimators": 13,
   "label_meta": {
     "5": {
       "mean": 0.002380412736900256,
@@ -38,11 +41,14 @@
   "train_samples": 3383507,
   "valid_samples": 1179511,
   "top10_features": [
+    "value_ep",
+    "size",
+    "amihud",
+    "short_reversal",
     "low_volatility",
     "momentum_12m1m",
-    "short_reversal",
     "beta",
-    "amihud"
+    "quality"
   ],
   "train_date": "2026-07-03"
 }

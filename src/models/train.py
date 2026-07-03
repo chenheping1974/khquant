@@ -95,26 +95,37 @@ def train_a_stock_ranker(
 
     # 3. 计算因子
     logger.info("[3/6] 计算因子 (4/3/2/1 框架)...")
-    # 尝试获取基本面数据 (akshare可能不可用)
     valuation_df, financial_df = None, None
+
+    # 腾讯财经: PE/PB/市值 (免费, 稳定)
     try:
-        from src.features.fundamental import fetch_daily_valuation, fetch_financial_quality
-        valuation_df = fetch_daily_valuation()
+        from src.features.fundamental import fetch_daily_valuation
+        symbols_list = raw_df["symbol"].unique().tolist()
+        valuation_df = fetch_daily_valuation(
+            symbols_list[:500] if quick else symbols_list,
+        )
         if valuation_df is not None and not valuation_df.empty:
-            symbols_list = raw_df["symbol"].unique().tolist()
-            financial_df = fetch_financial_quality(
-                symbols_list[:500] if quick else symbols_list[:200],
-            )
-            logger.info(f"  估值: {len(valuation_df)}只, 财务: {len(financial_df) if financial_df is not None else 0}行")
+            logger.info(f"  估值(腾讯): {len(valuation_df)}只")
     except Exception as e:
-        logger.warning(f"  基本面数据不可用({e}), 回退到仅价量因子")
+        logger.warning(f"  估值数据失败: {e}")
+
+    # akshare财报: ROE/负债率/增长率
+    try:
+        from src.features.fundamental import fetch_financial_quality
+        financial_df = fetch_financial_quality(
+            symbols_list[:500] if quick else symbols_list[:200],
+        )
+        if financial_df is not None and not financial_df.empty:
+            logger.info(f"  财务(akshare): {len(financial_df)}行")
+    except Exception as e:
+        logger.warning(f"  财务数据失败: {e}")
 
     factor_df = compute_all_factors(raw_df, valuation_df, financial_df)
     factor_names = get_factor_names()
     # 只保留实际可用(非全NaN)的因子
     factor_names = [f for f in factor_names
                     if f in factor_df.columns and factor_df[f].notna().any()]
-    logger.info(f"  可用因子: {len(factor_names)}个 / 总共18个")
+    logger.info(f"  可用因子: {len(factor_names)}个 / 总共16个")
 
     # 4. 构建标签
     logger.info("[4/6] 构建标签...")

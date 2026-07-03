@@ -31,48 +31,29 @@ REQUEST_DELAY = 0.5  # akshare 请求间隔(秒)
 #  1. 估值因子 (每日更新)
 # ═══════════════════════════════════════════════════════
 
-def fetch_daily_valuation() -> pd.DataFrame:
+def fetch_daily_valuation(symbols: list = None) -> pd.DataFrame:
     """
     获取全市场A股的每日估值指标。
 
+    数据源: 腾讯财经 (免费、稳定、无需认证)
+
     Returns
     -------
-    DataFrame: 代码, 名称, pe_ttm, pb, market_cap, ...
+    DataFrame: symbol, pe_ttm, pb, market_cap, log_market_cap, earnings_yield, ...
     """
-    logger.info("获取全市场估值数据...")
+    logger.info("获取全市场估值数据 (腾讯财经)...")
     try:
-        df = ak.stock_zh_a_spot_em()
-        df = df.rename(columns={
-            "代码": "symbol",
-            "名称": "name",
-            "市盈率-动态": "pe_ttm",
-            "市净率": "pb",
-            "总市值": "market_cap",
-        })
-        # 只保留需要的列
-        cols = ["symbol", "pe_ttm", "pb", "market_cap"]
-        df = df[[c for c in cols if c in df.columns]].copy()
+        from src.data.tencent_fetcher import fetch_valuation_batch
+        df = fetch_valuation_batch(symbols=symbols)
 
-        # 清洗
-        for c in ["pe_ttm", "pb", "market_cap"]:
-            if c in df.columns:
-                df[c] = pd.to_numeric(df[c], errors="coerce")
-                # 负PE是没有意义的
-                if c == "pe_ttm":
-                    df.loc[df[c] < 0, c] = np.nan
-                # 极端值裁剪
-                if c in ("pe_ttm", "pb"):
-                    df[c] = df[c].clip(lower=0).replace(0, np.nan)
+        if df is None or df.empty:
+            logger.warning("  腾讯财经返回空")
+            return pd.DataFrame()
 
         # 注册因子
         FUNDAMENTAL_FACTORS["pe_ttm"] = "滚动市盈率(越低越便宜)"
         FUNDAMENTAL_FACTORS["pb"] = "市净率(越低越接近净资产)"
         FUNDAMENTAL_FACTORS["log_market_cap"] = "对数市值(规模因子)"
-
-        # 添加衍生因子
-        df["log_market_cap"] = np.log(df["market_cap"].fillna(1e10))
-        # PE倒数 = 盈利收益率 (越高越好, 类似E/P)
-        df["earnings_yield"] = 1.0 / df["pe_ttm"].replace(0, np.nan)
         FUNDAMENTAL_FACTORS["earnings_yield"] = "盈利收益率(1/PE,越高越便宜)"
 
         logger.info(f"  估值数据: {len(df)} 只")
