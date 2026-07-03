@@ -31,7 +31,7 @@ from config import (
 )
 from src.data.storage import read_daily_bars
 from src.data.fetcher import load_adjust_factors, apply_hfq
-from src.features import a_stock as a_stock_feat
+from src.features.factors import compute_all_factors, get_factor_names
 from src.features import macro as macro_feat
 from src.models.labels import build_labels, check_label_quality
 
@@ -94,10 +94,27 @@ def train_a_stock_ranker(
         logger.warning("  无复权因子! 使用未复权数据 (训练结果可能不准确)")
 
     # 3. 计算因子
-    logger.info("[3/6] 计算A股因子...")
-    factor_df = a_stock_feat.compute_all_factors(raw_df)
-    factor_names = a_stock_feat.get_factor_names()
-    logger.info(f"  因子: {len(factor_names)}个")
+    logger.info("[3/6] 计算因子 (4/3/2/1 框架)...")
+    # 尝试获取基本面数据 (akshare可能不可用)
+    valuation_df, financial_df = None, None
+    try:
+        from src.features.fundamental import fetch_daily_valuation, fetch_financial_quality
+        valuation_df = fetch_daily_valuation()
+        if valuation_df is not None and not valuation_df.empty:
+            symbols_list = raw_df["symbol"].unique().tolist()
+            financial_df = fetch_financial_quality(
+                symbols_list[:500] if quick else symbols_list[:200],
+            )
+            logger.info(f"  估值: {len(valuation_df)}只, 财务: {len(financial_df) if financial_df is not None else 0}行")
+    except Exception as e:
+        logger.warning(f"  基本面数据不可用({e}), 回退到仅价量因子")
+
+    factor_df = compute_all_factors(raw_df, valuation_df, financial_df)
+    factor_names = get_factor_names()
+    # 只保留实际可用(非全NaN)的因子
+    factor_names = [f for f in factor_names
+                    if f in factor_df.columns and factor_df[f].notna().any()]
+    logger.info(f"  可用因子: {len(factor_names)}个 / 总共18个")
 
     # 4. 构建标签
     logger.info("[4/6] 构建标签...")
@@ -122,14 +139,31 @@ def train_a_stock_ranker(
 
     def _prepare_lgb(df):
         """准备 LightGBM 输入"""
+        # 必须按日期排序, 否则 lambdarank 的 group 计算错误
+        df = df.sort_values(["trade_date", "symbol"])
+
+        # 去掉标签为 NaN 的行 (尾巴上没有未来数据的)
+        df = df.dropna(subset=["label_composite"])
+        if df.empty:
+            raise ValueError("训练数据为空 (所有行label_composite都是NaN)")
+
         X = df[factor_names].fillna(0).astype(np.float32)
-        y = df["label_composite"].fillna(0).astype(np.float32)
+        y = df["label_composite"].astype(np.float32)
+
         # lambdarank 需要整数标签 → 分桶到0-4
-        y_int = pd.qcut(
-            y, q=5, labels=False, duplicates="drop"
-        ).astype(int)
-        # 按日期分组 (排序学习需要)
-        group = df.groupby("trade_date")["symbol"].count().values
+        try:
+            y_int = pd.qcut(y, q=5, labels=False, duplicates="drop").astype(int)
+        except ValueError:
+            # 数据太集中, 分成2桶
+            y_int = pd.qcut(y, q=2, labels=False, duplicates="drop").astype(int)
+
+        # 统计标签分布
+        from collections import Counter
+        dist = Counter(y_int)
+        logger.info(f"  标签分布: {dict(sorted(dist.items()))}")
+
+        # 按日期分组 (sort=False 保持排序后的顺序)
+        group = df.groupby("trade_date", sort=False)["symbol"].count().values
         return X, y_int, group
 
     X_train, y_train, group_train = _prepare_lgb(merged[train_mask])

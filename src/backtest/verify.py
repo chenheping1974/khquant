@@ -35,7 +35,7 @@ from config import (
 )
 from src.data.storage import read_daily_bars
 from src.data.fetcher import load_adjust_factors, apply_hfq
-from src.features import a_stock as a_stock_feat
+from src.features.factors import compute_all_factors, get_factor_names
 
 logger = logging.getLogger(__name__)
 
@@ -96,8 +96,8 @@ def backtest_a_stock_ranking(
     logger.info(f"  {raw_df['symbol'].nunique()}只, {len(raw_df)}行")
 
     # 2. 计算因子
-    logger.info("[2/6] 计算因子...")
-    factor_df = a_stock_feat.compute_all_factors(raw_df)
+    logger.info("[2/6] 计算统一因子...")
+    factor_df = compute_all_factors(raw_df)
 
     # 3. 生成信号
     logger.info("[3/6] 生成信号...")
@@ -312,8 +312,23 @@ def _model_generated_signals(factor_df: pd.DataFrame) -> pd.DataFrame:
         logger.warning(f"模型加载失败: {e}, 回退到动量因子")
         return _momentum_baseline_signals(factor_df)
 
-    factor_names = a_stock_feat.get_factor_names()
-    available = [f for f in factor_names if f in factor_df.columns]
+    factor_names = get_factor_names()
+    # 只保留实际存在且非全NaN的因子
+    available = [f for f in factor_names
+                 if f in factor_df.columns and factor_df[f].notna().any()]
+
+    # 模型训练时用的特征数
+    n_model_features = model.num_feature()
+    logger.info(f"  模型特征数: {n_model_features}, 可用特征: {len(available)}")
+
+    # 如果可用特征数与模型不匹配, 只用前n个 Phase1 因子
+    if len(available) != n_model_features:
+        phase1_factors = ["beta", "short_reversal", "momentum_12m1m",
+                          "low_volatility", "amihud"]
+        available = [f for f in phase1_factors if f in factor_df.columns]
+        if len(available) != n_model_features:
+            logger.warning(f"特征数不匹配且无法对齐, 回退到动量基线")
+            return _momentum_baseline_signals(factor_df)
 
     # 逐日预测
     scores = {}
