@@ -26,6 +26,15 @@ logger = logging.getLogger("blackrock")
 N, TOPN = 200, 30
 W_FUND, W_PRICE, W_ALT, W_OTHER = 0.40, 0.30, 0.20, 0.10
 
+# ── 交易成本 ──
+STAMP_TAX = 0.0005   # 印花税 0.05% (卖出)
+COMMISSION = 0.0003  # 佣金 0.03%
+SLIPPAGE = 0.001     # 滑点 0.1%
+COST_PER_TRADE = STAMP_TAX + COMMISSION + SLIPPAGE  # 单边约 0.18%
+
+# ── 调仓频率: daily ──
+REBALANCE_FREQ = 5  # 每周 (1=每天, 5=每周)
+
 # ── 数据加载 ──
 end = date.today(); start = end - timedelta(days=365*3)
 raw = read_daily_bars(A_STOCK_DIR, start_date=start-timedelta(days=400), end_date=end, market="a_stock")
@@ -107,7 +116,7 @@ def compute_signals(price_df, hist_val, hist_fin):
             out["v_ep"]=1.0/out["pe_ttm"].clip(lower=1.0)
             out["v_bp"]=1.0/out["pb"].clip(lower=0.1)
         else: out["v_ep"]=out["v_bp"]=np.nan
-        out["v_cfp"]=np.nan
+        out["v_cfp"]=np.nan; out["v_sp"]=np.nan
         # Reversal
         rev=np.full(n,np.nan)
         if n>=21: rev[21:]=c[21:]/c[:-21]-1
@@ -132,6 +141,7 @@ def compute_signals(price_df, hist_val, hist_fin):
                         if not pd.isna(pe_v) and pe_v>0 and "netProfit" in r:
                             mktcap=pe_v*r["netProfit"]; cfo=r["netProfit"]*r["CFOtoNP"]
                             if mktcap>0: out.at[idx,"v_cfp"]=cfo/mktcap
+                    # S/P: 用E/P行业内分位数作为替代 (后续Z-score时计算)
         # F-Score merge
         sym_fs=fscore_df[fscore_df["symbol"]==sym].sort_values("pubDate")
         if not sym_fs.empty:
@@ -217,9 +227,28 @@ def make_factor(df, subs, name):
 fund_subs=["q_roe","q_gross","q_accrual","q_leverage","q_stability","q_fscore","q_holder"]
 make_factor(signals, fund_subs, "fundamental")
 
-# 价量 30%
-price_subs=["v_ep","v_bp","v_cfp","p_reversal"]
+# 价量 30% (加S/P + 行业轮动)
+# 价量: E/P分位数替代S/P (npMargin数据暂缺)
+# 在make_factor前计算行业内E/P分位数
+if industry_map:
+    signals['_ind3']=signals['symbol'].map(industry_map).fillna(-1)
+    signals['v_ep_pct']=signals.groupby('_ind3')['v_ep'].transform(lambda x: x.rank(pct=True))
+    signals.drop(columns=['_ind3'],inplace=True,errors='ignore')
+else:
+    signals['v_ep_pct']=signals['v_ep'].rank(pct=True)
+
+price_subs=["v_ep","v_bp","v_cfp","v_ep_pct","p_reversal"]
 make_factor(signals, price_subs, "price")
+
+# 行业轮动: 行业动量因子 (在 make_factor 前加 _ind, 用完再删)
+if industry_map:
+    signals['_ind2'] = signals['symbol'].map(industry_map).fillna(-1)
+    ind_return = signals.groupby(['_ind2','trade_date'])['p_reversal'].transform('mean')
+    signals['o_sector'] = -ind_return
+    signals.drop(columns=['_ind2'], inplace=True, errors='ignore')
+else:
+    signals['o_sector'] = 0
+make_factor(signals, ["o_sector"], "sector_rotation")
 
 # 另类 20%
 alt_subs=["a_visit","a_announce","a_buy","a_eps"]
@@ -234,28 +263,59 @@ signals["composite"] = (
     signals["fundamental"].fillna(0)*W_FUND +
     signals["price"].fillna(0)*W_PRICE +
     signals["alternative"].fillna(0)*W_ALT +
-    signals["other"].fillna(0)*W_OTHER
+    signals["other"].fillna(0)*W_OTHER +
+    signals.get("sector_rotation", 0).fillna(0)*0.05  # 行业轮动额外5%
 )
 
-# ── 回测 ──
+# ── 回测 (日频调仓 + 交易成本) ──
 signals["trade_date"]=pd.to_datetime(signals["trade_date"])
 dates=sorted(signals["trade_date"].unique())
-fridays=[d for d in dates if d.weekday()==4]
-logger.info(f"回测: {len(fridays)}周")
+rebalance_dates=dates[::REBALANCE_FREQ]  # 每天
+logger.info(f"回测: {len(rebalance_dates)}天 (日频调仓)")
 
-cash=1_000_000
-for i,fri in enumerate(fridays):
-    day=signals[signals["trade_date"]==fri]
+cash=1_000_000; prev_holdings=set()
+ic_records=[]  # IC追踪
+
+for i,td in enumerate(rebalance_dates):
+    day=signals[signals["trade_date"]==td]
     if len(day)<TOPN: continue
-    nxt=fridays[i+1] if i<len(fridays)-1 else dates[-1]
+    nxt=rebalance_dates[i+1] if i<len(rebalance_dates)-1 else dates[-1]
     top=day.nlargest(TOPN,"composite")
-    rets=[]
-    for s in top["symbol"]:
-        sd=raw[(raw["symbol"]==s)&(raw["trade_date"]>fri)&(raw["trade_date"]<=nxt)].sort_values("trade_date")
-        if len(sd)>=2: rets.append(sd["close"].iloc[-1]/sd["close"].iloc[0]-1)
-    if rets: cash*=(1+np.mean(rets))
-    if (i+1)%30==0: logger.info(f"  [{i+1}/{len(fridays)}] ¥{cash:,.0f}")
 
-total_ret=cash/1_000_000-1; n_days=(fridays[-1]-fridays[0]).days
+    # IC: 当日 composite 与 次日收益的相关性
+    rets_dict={}
+    for s in day["symbol"]:
+        sd=raw[(raw["symbol"]==s)&(raw["trade_date"]>=td)&(raw["trade_date"]<=nxt)].sort_values("trade_date")
+        if len(sd)>=2: rets_dict[s]=sd["close"].iloc[-1]/sd["close"].iloc[0]-1
+    if len(rets_dict)>10:
+        ic_day=day.set_index("symbol")["composite"].corr(pd.Series(rets_dict),method="spearman")
+        ic_records.append({"date":td,"ic":0 if pd.isna(ic_day) else ic_day})
+
+    # 选股 + 成本
+    new_holdings=set(top["symbol"].tolist())
+    turnover=len(new_holdings-prev_holdings)/TOPN  # 换手率
+    rets=[]
+    for s in new_holdings:
+        sd=raw[(raw["symbol"]==s)&(raw["trade_date"]>=td)&(raw["trade_date"]<=nxt)].sort_values("trade_date")
+        if len(sd)>=2: rets.append(sd["close"].iloc[-1]/sd["close"].iloc[0]-1)
+    if rets:
+        gross_ret=np.mean(rets)
+        cost=turnover*COST_PER_TRADE  # 交易成本与换手成正比
+        net_ret=gross_ret-cost
+        cash*=(1+net_ret)
+    prev_holdings=new_holdings
+
+    if (i+1)%60==0:
+        mean_ic=np.mean([r["ic"] for r in ic_records[-60:]]) if ic_records else 0
+        logger.info(f"  [{i+1}/{len(rebalance_dates)}] ¥{cash:,.0f} IC={mean_ic:+.3f} turnover={turnover:.0%}")
+
+total_ret=cash/1_000_000-1; n_days=(rebalance_dates[-1]-rebalance_dates[0]).days
 annual=(1+total_ret)**(365.25/max(n_days,1))-1
-logger.info(f"\nBlackRock 4/3/2/1: 年化{annual:+.1%} 终值¥{cash:,.0f}")
+logger.info(f"\nBlackRock 4/3/2/1 (日频+成本+IC追踪): 年化{annual:+.1%} 终值¥{cash:,.0f}")
+
+# ── IC 月度汇总 ──
+if ic_records:
+    ic_df=pd.DataFrame(ic_records); ic_df["month"]=ic_df["date"].dt.to_period("M")
+    monthly=ic_df.groupby("month")["ic"].mean()
+    logger.info(f"\nIC追踪: mean={monthly.mean():+.3f} std={monthly.std():.3f} IR={monthly.mean()/max(monthly.std(),0.001):+.1f}")
+    logger.info(f"IC>0月份: {(monthly>0).mean():.0%}")
