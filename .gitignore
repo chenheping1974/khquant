@@ -45,12 +45,10 @@ secrets.json
 # Cache
 .cache/
 *.cache
+.cache_pe_200.parquet  # PE数据大, 用时重新拉
 
 # Data — 在独立仓库 khquant-data
 /data/
 
 # 排除: src/data 不是数据, 是代码
 !/src/data/
-.cache_*
-.industry_cache.json
-.industry_names.json
