@@ -29,14 +29,24 @@ raw=raw[raw['symbol'].isin(syms)].copy(); raw['trade_date']=pd.to_datetime(raw['
 val=fetch_valuation_batch(symbols=syms[:200])
 val['trade_date']=pd.to_datetime(val['trade_date']) if 'trade_date' in val.columns else None
 
-fin=pd.read_parquet('.cache_fin_200.parquet'); fin['pubDate']=pd.to_datetime(fin['pubDate'])
-holder=pd.read_parquet('.cache_holder_200.parquet'); holder['end_date']=pd.to_datetime(holder['end_date'])
-holder['holder_signal']=-holder.groupby('symbol')['holder_num'].transform(lambda x:x.pct_change())
+# 安全加载缓存 (文件可能不存在于Actions)
+def safe_read(path):
+    try: return pd.read_parquet(path)
+    except: return pd.DataFrame()
+def safe_json(path):
+    try: return json.load(open(path))
+    except: return {}
 
-# 行业
-ind_map=json.load(open('.industry_cache.json'))
-ind_names=json.load(open('.industry_names.json')).get('code_to_name',{})
-tiers=json.load(open('.industry_names.json')).get('strategic_tier',{})
+fin=safe_read('.cache_fin_200.parquet')
+if not fin.empty: fin['pubDate']=pd.to_datetime(fin['pubDate'])
+holder=safe_read('.cache_holder_200.parquet')
+if not holder.empty:
+    holder['end_date']=pd.to_datetime(holder['end_date'])
+    holder['holder_signal']=-holder.groupby('symbol')['holder_num'].transform(lambda x:x.pct_change())
+
+ind_map=safe_json('.industry_cache.json')
+ind_names=safe_json('.industry_names.json').get('code_to_name',{})
+tiers=safe_json('.industry_names.json').get('strategic_tier',{})
 
 # === 快速因子计算 (仅最新日) ===
 latest_date=raw['trade_date'].max()
@@ -82,8 +92,8 @@ for sym in syms[:200]:
 
     # Alternative
     a_visit=0
-    av=pd.read_parquet('.cache_analyst_visit.parquet')
-    if not av.empty:
+    av=safe_read('.cache_analyst_visit.parquet')
+    if not av.empty and 'symbol' in av.columns:
         sv_av=av[av['symbol']==sym]
         if not sv_av.empty: a_visit=len(sv_av)
 
