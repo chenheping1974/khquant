@@ -2,7 +2,7 @@ name: Daily Inference
 
 on:
   schedule:
-    - cron: '0 8 * * 1-5'  # 北京时间 16:00
+    - cron: '0 12 * * 1-5'  # 北京时间 20:00
   workflow_dispatch:
 
 jobs:
@@ -13,6 +13,13 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Checkout Data Repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/khquant-data
+          path: khquant-data
+          token: ${{ secrets.GH_PAT }}
 
       - name: Setup Python
         uses: actions/setup-python@v5
