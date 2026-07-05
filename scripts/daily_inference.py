@@ -50,7 +50,13 @@ tiers=safe_json('.industry_names.json').get('strategic_tier',{})
 
 # === 快速因子计算 (仅最新日) ===
 latest_date=raw['trade_date'].max()
+# 输出到文件 + 控制台
+import os; os.makedirs("results", exist_ok=True)
+out_path = f"results/signals-{latest_date.date()}.txt"
+fout = open(out_path, "w")
+
 print(f"日期: {latest_date.date()}\n")
+fout.write(f"khquant v3.0 选股信号 — {latest_date.date()}\n{'='*55}\n\n")
 
 results=[]
 for sym in syms[:200]:
@@ -122,12 +128,19 @@ name_map = {}
 if val is not None and 'name' in val.columns:
     name_map = dict(zip(val['symbol'], val['name']))
 
-print(f"{'排名':<5} {'代码':<8} {'名称':<12} {'行业':<12} {'总分':>8}")
-print('-'*55)
+header = f"{'排名':<5} {'代码':<8} {'名称':<12} {'行业':<12} {'总分':>8}"
+print(header); fout.write(header + "\n")
+print('-'*55); fout.write('-'*55 + "\n")
 for i,(_,r) in enumerate(df.iterrows()):
     nm = name_map.get(r['symbol'], '')
-    print(f"{i+1:<5} {r['symbol']:<8} {nm:<12} {r['industry']:<12} {r['composite']:>+8.3f}")
+    line = f"{i+1:<5} {r['symbol']:<8} {nm:<12} {r['industry']:<12} {r['composite']:>+8.3f}"
+    print(line); fout.write(line + "\n")
 
-print(f"\n行业分布:")
+ind_summary = f"\n行业分布:"
+print(ind_summary); fout.write(ind_summary + "\n")
 for ind,cnt in df['industry'].value_counts().head(10).items():
-    print(f"  {ind}: {cnt}只")
+    line = f"  {ind}: {cnt}只"
+    print(line); fout.write(line + "\n")
+
+fout.close()
+print(f"\n结果已保存: {out_path}")
