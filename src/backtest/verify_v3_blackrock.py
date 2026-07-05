@@ -33,7 +33,7 @@ SLIPPAGE = 0.001     # 滑点 0.1%
 COST_PER_TRADE = STAMP_TAX + COMMISSION + SLIPPAGE  # 单边约 0.18%
 
 # ── 调仓频率: daily ──
-REBALANCE_FREQ = 5  # 每周 (1=每天, 5=每周)
+REBALANCE_FREQ = 1  # 每天调仓
 
 # ── 数据加载 ──
 end = date.today(); start = end - timedelta(days=365*3)
@@ -267,55 +267,51 @@ signals["composite"] = (
     signals.get("sector_rotation", 0).fillna(0)*0.05  # 行业轮动额外5%
 )
 
-# ── 回测 (日频调仓 + 交易成本) ──
+# ── 预计算收益矩阵 (向量化, 日频秒级) ──
+logger.info("预计算收益矩阵...")
+close_m = raw.pivot_table(index="trade_date",columns="symbol",values="close",aggfunc="last")
+close_m = close_m.sort_index().ffill()
+fwd_ret = close_m.pct_change().shift(-1)  # t日买入 → t+1日卖出收益
+logger.info(f"  矩阵: {close_m.shape}")
+
+# ── 回测 (向量化) ──
 signals["trade_date"]=pd.to_datetime(signals["trade_date"])
 dates=sorted(signals["trade_date"].unique())
-rebalance_dates=dates[::REBALANCE_FREQ]  # 每天
-logger.info(f"回测: {len(rebalance_dates)}天 (日频调仓)")
+rebalance_dates=dates[::REBALANCE_FREQ]
+logger.info(f"回测: {len(rebalance_dates)}天")
 
-cash=1_000_000; prev_holdings=set()
-ic_records=[]  # IC追踪
+cash=1_000_000; prev_holdings=set(); ic_records=[]
 
 for i,td in enumerate(rebalance_dates):
     day=signals[signals["trade_date"]==td]
     if len(day)<TOPN: continue
-    nxt=rebalance_dates[i+1] if i<len(rebalance_dates)-1 else dates[-1]
     top=day.nlargest(TOPN,"composite")
 
-    # IC: 当日 composite 与 次日收益的相关性
-    rets_dict={}
-    for s in day["symbol"]:
-        sd=raw[(raw["symbol"]==s)&(raw["trade_date"]>=td)&(raw["trade_date"]<=nxt)].sort_values("trade_date")
-        if len(sd)>=2: rets_dict[s]=sd["close"].iloc[-1]/sd["close"].iloc[0]-1
-    if len(rets_dict)>10:
-        ic_day=day.set_index("symbol")["composite"].corr(pd.Series(rets_dict),method="spearman")
-        ic_records.append({"date":td,"ic":0 if pd.isna(ic_day) else ic_day})
+    # IC: 从矩阵直接读
+    if td in fwd_ret.index:
+        fwd=fwd_ret.loc[td]; common=list(set(day["symbol"])&set(fwd.dropna().index))
+        if len(common)>10:
+            ic=day.set_index("symbol").loc[common,"composite"].corr(fwd[common],method="spearman")
+            ic_records.append({"date":td,"ic":0 if pd.isna(ic) else ic})
 
-    # 选股 + 成本
+    # 收益: 从矩阵向量化读取
     new_holdings=set(top["symbol"].tolist())
-    turnover=len(new_holdings-prev_holdings)/TOPN  # 换手率
-    rets=[]
-    for s in new_holdings:
-        sd=raw[(raw["symbol"]==s)&(raw["trade_date"]>=td)&(raw["trade_date"]<=nxt)].sort_values("trade_date")
-        if len(sd)>=2: rets.append(sd["close"].iloc[-1]/sd["close"].iloc[0]-1)
-    if rets:
-        gross_ret=np.mean(rets)
-        cost=turnover*COST_PER_TRADE  # 交易成本与换手成正比
-        net_ret=gross_ret-cost
-        cash*=(1+net_ret)
+    turnover=len(new_holdings-prev_holdings)/TOPN
+    if td in fwd_ret.index:
+        rets=[fwd_ret.loc[td].get(s) for s in new_holdings]
+        rets=[r for r in rets if r is not None and not pd.isna(r)]
+        if rets: cash*=(1+np.mean(rets)-turnover*COST_PER_TRADE)
     prev_holdings=new_holdings
 
-    if (i+1)%60==0:
-        mean_ic=np.mean([r["ic"] for r in ic_records[-60:]]) if ic_records else 0
-        logger.info(f"  [{i+1}/{len(rebalance_dates)}] ¥{cash:,.0f} IC={mean_ic:+.3f} turnover={turnover:.0%}")
+    if (i+1)%200==0:
+        m_ic=np.mean([r["ic"] for r in ic_records[-200:]]) if ic_records else 0
+        logger.info(f"  [{i+1}/{len(rebalance_dates)}] ¥{cash:,.0f} IC={m_ic:+.3f}")
 
 total_ret=cash/1_000_000-1; n_days=(rebalance_dates[-1]-rebalance_dates[0]).days
 annual=(1+total_ret)**(365.25/max(n_days,1))-1
-logger.info(f"\nBlackRock 4/3/2/1 (日频+成本+IC追踪): 年化{annual:+.1%} 终值¥{cash:,.0f}")
+logger.info(f"\nBlackRock 4/3/2/1: 年化{annual:+.1%} 终值¥{cash:,.0f}")
 
-# ── IC 月度汇总 ──
 if ic_records:
     ic_df=pd.DataFrame(ic_records); ic_df["month"]=ic_df["date"].dt.to_period("M")
     monthly=ic_df.groupby("month")["ic"].mean()
-    logger.info(f"\nIC追踪: mean={monthly.mean():+.3f} std={monthly.std():.3f} IR={monthly.mean()/max(monthly.std(),0.001):+.1f}")
-    logger.info(f"IC>0月份: {(monthly>0).mean():.0%}")
+    logger.info(f"IC: mean={monthly.mean():+.3f} IR={monthly.mean()/max(monthly.std(),0.001):+.1f} >0:{(monthly>0).mean():.0%}")
