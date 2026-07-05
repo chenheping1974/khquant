@@ -1,0 +1,306 @@
+{
+  "date": "2026-07-03",
+  "updated": "2026-07-05 22:52:53.955845",
+  "top30": [
+    {
+      "rank": 1,
+      "symbol": "000338",
+      "name": "潍柴动力",
+      "industry": "汽车零部件",
+      "score": 2.02,
+      "value": 0.046,
+      "momentum": 1.21,
+      "quality": 0.033
+    },
+    {
+      "rank": 2,
+      "symbol": "000061",
+      "name": "农 产 品",
+      "industry": "贸易行业",
+      "score": 1.744,
+      "value": 0.039,
+      "momentum": -0.014,
+      "quality": 0.016
+    },
+    {
+      "rank": 3,
+      "symbol": "000625",
+      "name": "长安汽车",
+      "industry": "汽车整车",
+      "score": 1.675,
+      "value": 0.043,
+      "momentum": -0.355,
+      "quality": NaN
+    },
+    {
+      "rank": 4,
+      "symbol": "000598",
+      "name": "兴蓉环境",
+      "industry": "公用事业",
+      "score": 1.47,
+      "value": 0.104,
+      "momentum": -0.039,
+      "quality": NaN
+    },
+    {
+      "rank": 5,
+      "symbol": "000603",
+      "name": "盛达资源",
+      "industry": "有色金属",
+      "score": 1.459,
+      "value": 0.036,
+      "momentum": 1.015,
+      "quality": NaN
+    },
+    {
+      "rank": 6,
+      "symbol": "000543",
+      "name": "皖能电力",
+      "industry": "电力行业",
+      "score": 1.327,
+      "value": 0.121,
+      "momentum": 0.306,
+      "quality": 0.025
+    },
+    {
+      "rank": 7,
+      "symbol": "000657",
+      "name": "中钨高新",
+      "industry": "小金属",
+      "score": 1.284,
+      "value": 0.01,
+      "momentum": 5.435,
+      "quality": NaN
+    },
+    {
+      "rank": 8,
+      "symbol": "000035",
+      "name": "中国天楹",
+      "industry": "环保工程",
+      "score": 1.215,
+      "value": 0.026,
+      "momentum": 0.339,
+      "quality": 0.01
+    },
+    {
+      "rank": 9,
+      "symbol": "000039",
+      "name": "中集集团",
+      "industry": "通用设备",
+      "score": 1.175,
+      "value": NaN,
+      "momentum": 0.307,
+      "quality": 0.004
+    },
+    {
+      "rank": 10,
+      "symbol": "000537",
+      "name": "绿发电力",
+      "industry": "电力行业",
+      "score": 1.156,
+      "value": 0.042,
+      "momentum": 0.32,
+      "quality": 0.004
+    },
+    {
+      "rank": 11,
+      "symbol": "000636",
+      "name": "风华高科",
+      "industry": "电子元件",
+      "score": 1.091,
+      "value": 0.004,
+      "momentum": 3.866,
+      "quality": NaN
+    },
+    {
+      "rank": 12,
+      "symbol": "000538",
+      "name": "云南白药",
+      "industry": "中药",
+      "score": 1.036,
+      "value": 0.06,
+      "momentum": -0.117,
+      "quality": 0.05
+    },
+    {
+      "rank": 13,
+      "symbol": "000591",
+      "name": "太阳能",
+      "industry": "电力行业",
+      "score": 1.024,
+      "value": 0.04,
+      "momentum": 0.3,
+      "quality": 0.008
+    },
+    {
+      "rank": 14,
+      "symbol": "000629",
+      "name": "钒钛股份",
+      "industry": "钢铁行业",
+      "score": 0.996,
+      "value": 0.002,
+      "momentum": 0.351,
+      "quality": NaN
+    },
+    {
+      "rank": 15,
+      "symbol": "000539",
+      "name": "粤电力Ａ",
+      "industry": "电力行业",
+      "score": 0.993,
+      "value": 0.024,
+      "momentum": 1.029,
+      "quality": -0.006
+    },
+    {
+      "rank": 16,
+      "symbol": "000050",
+      "name": "深天马Ａ",
+      "industry": "光学光电子",
+      "score": 0.947,
+      "value": NaN,
+      "momentum": 0.038,
+      "quality": -0.005
+    },
+    {
+      "rank": 17,
+      "symbol": "000680",
+      "name": "山推股份",
+      "industry": "工程机械",
+      "score": 0.94,
+      "value": 0.082,
+      "momentum": 0.229,
+      "quality": NaN
+    },
+    {
+      "rank": 18,
+      "symbol": "000062",
+      "name": "深圳华强",
+      "industry": "电子元件",
+      "score": 0.917,
+      "value": 0.017,
+      "momentum": 0.363,
+      "quality": 0.03
+    },
+    {
+      "rank": 19,
+      "symbol": "000001",
+      "name": "平安银行",
+      "industry": "银行",
+      "score": 0.91,
+      "value": 0.216,
+      "momentum": -0.086,
+      "quality": 0.027
+    },
+    {
+      "rank": 20,
+      "symbol": "000617",
+      "name": "中油资本",
+      "industry": "多元金融",
+      "score": 0.902,
+      "value": 0.053,
+      "momentum": 0.058,
+      "quality": NaN
+    },
+    {
+      "rank": 21,
+      "symbol": "000060",
+      "name": "中金岭南",
+      "industry": "有色金属",
+      "score": 0.875,
+      "value": 0.032,
+      "momentum": 0.761,
+      "quality": 0.026
+    },
+    {
+      "rank": 22,
+      "symbol": "000513",
+      "name": "丽珠集团",
+      "industry": "医药制造",
+      "score": 0.857,
+      "value": 0.073,
+      "momentum": -0.154,
+      "quality": 0.041
+    },
+    {
+      "rank": 23,
+      "symbol": "000026",
+      "name": "飞亚达",
+      "industry": "珠宝首饰",
+      "score": 0.824,
+      "value": 0.012,
+      "momentum": 0.916,
+      "quality": 0.019
+    },
+    {
+      "rank": 24,
+      "symbol": "000408",
+      "name": "藏格矿业",
+      "industry": "化肥行业",
+      "score": 0.812,
+      "value": 0.041,
+      "momentum": 0.903,
+      "quality": 0.093
+    },
+    {
+      "rank": 25,
+      "symbol": "000030",
+      "name": "富奥股份",
+      "industry": "汽车行业",
+      "score": 0.801,
+      "value": 0.094,
+      "momentum": -0.209,
+      "quality": 0.015
+    },
+    {
+      "rank": 26,
+      "symbol": "000600",
+      "name": "建投能源",
+      "industry": "电力行业",
+      "score": 0.793,
+      "value": 0.125,
+      "momentum": 0.765,
+      "quality": NaN
+    },
+    {
+      "rank": 27,
+      "symbol": "000552",
+      "name": "甘肃能化",
+      "industry": "煤炭采选",
+      "score": 0.783,
+      "value": NaN,
+      "momentum": 0.193,
+      "quality": 0.004
+    },
+    {
+      "rank": 28,
+      "symbol": "000501",
+      "name": "武商集团",
+      "industry": "商业百货",
+      "score": 0.778,
+      "value": 0.03,
+      "momentum": -0.138,
+      "quality": 0.011
+    },
+    {
+      "rank": 29,
+      "symbol": "000506",
+      "name": "招金黄金",
+      "industry": "贵金属",
+      "score": 0.773,
+      "value": 0.027,
+      "momentum": 0.554,
+      "quality": 0.236
+    },
+    {
+      "rank": 30,
+      "symbol": "000166",
+      "name": "申万宏源",
+      "industry": "券商信托",
+      "score": 0.762,
+      "value": 0.087,
+      "momentum": -0.096,
+      "quality": 0.021
+    }
+  ]
+}
