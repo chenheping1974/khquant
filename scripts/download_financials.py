@@ -51,6 +51,7 @@ for i, code in enumerate(syms):
                         "statDate": pd.to_datetime(df["statDate"].iloc[0]).date(),
                         "roe": float(df["roeAvg"].iloc[0]) if df["roeAvg"].iloc[0] != "" else np.nan,
                         "gpMargin": float(df["gpMargin"].iloc[0]) if df["gpMargin"].iloc[0] != "" else np.nan,
+                        "npMargin": float(df["npMargin"].iloc[0]) if df["npMargin"].iloc[0] != "" else np.nan,
                         "netProfit": float(df["netProfit"].iloc[0]) if df["netProfit"].iloc[0] != "" else np.nan,
                     })
             except Exception:

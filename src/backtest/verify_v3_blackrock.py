@@ -116,7 +116,7 @@ def compute_signals(price_df, hist_val, hist_fin):
             out["v_ep"]=1.0/out["pe_ttm"].clip(lower=1.0)
             out["v_bp"]=1.0/out["pb"].clip(lower=0.1)
         else: out["v_ep"]=out["v_bp"]=np.nan
-        out["v_cfp"]=np.nan; out["v_sp"]=np.nan
+        out["v_cfp"]=np.nan; out["v_sp"]=np.nan  # S/P (营收/市值)
         # Reversal
         rev=np.full(n,np.nan)
         if n>=21: rev[21:]=c[21:]/c[:-21]-1
@@ -141,7 +141,12 @@ def compute_signals(price_df, hist_val, hist_fin):
                         if not pd.isna(pe_v) and pe_v>0 and "netProfit" in r:
                             mktcap=pe_v*r["netProfit"]; cfo=r["netProfit"]*r["CFOtoNP"]
                             if mktcap>0: out.at[idx,"v_cfp"]=cfo/mktcap
-                    # S/P: 用E/P行业内分位数作为替代 (后续Z-score时计算)
+                    # S/P = 营收/市值 (需要npMargin)
+                    if "npMargin" in r and not pd.isna(r.get("npMargin")) and r["npMargin"]>0:
+                        pe_v=out.at[idx,"pe_ttm"] if "pe_ttm" in out.columns else np.nan
+                        if not pd.isna(pe_v) and pe_v>0 and "netProfit" in r:
+                            revenue=r["netProfit"]/(r["npMargin"]); mktcap=pe_v*r["netProfit"]
+                            if mktcap>0: out.at[idx,"v_sp"]=revenue/mktcap
         # F-Score merge
         sym_fs=fscore_df[fscore_df["symbol"]==sym].sort_values("pubDate")
         if not sym_fs.empty:
@@ -237,7 +242,7 @@ if industry_map:
 else:
     signals['v_ep_pct']=signals['v_ep'].rank(pct=True)
 
-price_subs=["v_ep","v_bp","v_cfp","v_ep_pct","p_reversal"]
+price_subs=["v_ep","v_bp","v_cfp","v_sp","v_ep_pct","p_reversal"]
 make_factor(signals, price_subs, "price")
 
 # 行业轮动: 行业动量因子 (在 make_factor 前加 _ind, 用完再删)
