@@ -23,11 +23,14 @@ if not hasattr(pd.DataFrame,'append'):
 # 数据
 end=date.today(); start=end-timedelta(days=400)
 raw=read_daily_bars(A_STOCK_DIR,start_date=start,end_date=end,market='a_stock')
-syms=sorted(raw['symbol'].unique())[:300]
+syms=sorted(raw['symbol'].unique())
 raw=raw[raw['symbol'].isin(syms)].copy(); raw['trade_date']=pd.to_datetime(raw['trade_date'])
 
-val=fetch_valuation_batch(symbols=syms[:200])
-val['trade_date']=pd.to_datetime(val['trade_date']) if 'trade_date' in val.columns else None
+# PE: 尽可能多拉 (腾讯单次50只, 500只≈10秒)
+N_PE = min(1000, len(syms))
+val=fetch_valuation_batch(symbols=syms[:N_PE])
+if val is not None and not val.empty and 'trade_date' in val.columns:
+    val['trade_date']=pd.to_datetime(val['trade_date'])
 
 # 安全加载缓存 (文件可能不存在于Actions)
 def safe_read(path):
@@ -37,9 +40,9 @@ def safe_json(path):
     try: return json.load(open(path))
     except: return {}
 
-fin=safe_read('.cache_fin_200.parquet')
+fin=safe_read('.cache_fin_infer.parquet')  # Q1全量财报
 if not fin.empty: fin['pubDate']=pd.to_datetime(fin['pubDate'])
-holder=safe_read('.cache_holder_200.parquet')
+holder=safe_read('.cache_holder_all.parquet')  # 全量股东户数
 if not holder.empty:
     holder['end_date']=pd.to_datetime(holder['end_date'])
     holder['holder_signal']=-holder.groupby('symbol')['holder_num'].transform(lambda x:x.pct_change())
@@ -59,7 +62,7 @@ print(f"日期: {latest_date.date()}\n")
 fout.write(f"khquant v3.0 选股信号 — {latest_date.date()}\n{'='*55}\n\n")
 
 results=[]
-for sym in syms[:200]:
+for sym in syms[:N_PE]:  # 全量PE覆盖的股票
     grp=raw[raw['symbol']==sym].sort_values('trade_date')
     c=grp['close'].values; n=len(c)
     if n<60: continue

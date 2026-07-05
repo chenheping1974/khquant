@@ -52,9 +52,9 @@ jobs:
         run: |
           git config user.name "khquant-bot"
           git config user.email "bot@khquant.local"
-          git add results/latest.json results/signals-*.txt
+          git add results/latest.json results/signals-*.txt 2>/dev/null || true
           git diff --staged --quiet || git commit -m "signals: $(date +%Y-%m-%d) daily picks"
-          git push
+          git push || true
 
       - name: Upload Signals
         uses: actions/upload-artifact@v4

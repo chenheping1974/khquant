@@ -17,8 +17,8 @@ env/
 # R2 本地缓存 (切换R2时生效)
 .r2_cache/
 
-# Results
-results/
+# Results — 提交 latest.json 供其他项目HTTP访问
+
 
 # IDE
 .vscode/
