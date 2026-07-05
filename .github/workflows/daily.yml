@@ -29,6 +29,8 @@ jobs:
           key: fin-data-v1
 
       - name: Daily Inference
+        env:
+          PYTHONPATH: ${{ github.workspace }}
         run: python scripts/daily_inference.py
 
       - name: Upload Signals
