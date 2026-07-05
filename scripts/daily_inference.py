@@ -150,6 +150,7 @@ import json
 json_data = {
     "date": str(latest_date.date()),
     "updated": str(pd.Timestamp.now()),
+    "method": "BlackRock 4/3/2/1, 200 stocks",
     "top30": []
 }
 for _, r in df.iterrows():
@@ -159,9 +160,17 @@ for _, r in df.iterrows():
         "name": name_map.get(r["symbol"], ""),
         "industry": r["industry"],
         "score": round(float(r["composite"]), 3),
-        "value": round(float(r.get("v_ep", 0)), 3),
-        "momentum": round(float(r.get("momentum", 0)), 3),
-        "quality": round(float(r.get("q_roe", 0)), 3),
+        "factors": {
+            "value_ep": round(float(r.get("v_ep", 0) or 0), 4),
+            "value_bp": round(float(r.get("v_bp", 0) or 0), 4),
+            "momentum_12m1m": round(float(r.get("momentum", 0) or 0), 4),
+            "reversal_1m": round(float(r.get("reversal", 0) or 0), 4),
+            "quality_roe": round(float(r.get("q_roe", 0) or 0), 4),
+            "quality_leverage": round(float(r.get("q_leverage", 0) or 0), 4),
+            "quality_fscore": round(float(r.get("q_fscore", 0) or 0), 2),
+            "alt_visits": int(r.get("a_visit", 0) or 0),
+            "strategic_tier": int(r.get("strategic", 0) or 0),
+        }
     })
 
 latest_json = "results/latest.json"
