@@ -1,51 +1,39 @@
-name: Daily Pipeline
+name: Daily Inference
 
 on:
   schedule:
-    # 北京时间 16:00 = UTC 08:00, 周一至周五
-    - cron: '0 8 * * 1-5'
+    - cron: '0 8 * * 1-5'  # 北京时间 16:00
   workflow_dispatch:
 
 jobs:
-  daily:
+  infer:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-        with:
-          path: khquant
-
-      - name: Checkout Data
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ github.repository_owner }}/khquant-data
-          path: khquant-data
-          token: ${{ secrets.GH_PAT }}
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: Install System Deps
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq libomp-dev
+      - name: Install Deps
+        run: pip install pandas numpy pyarrow requests akshare
 
-      - name: Install Python Deps
-        run: pip install -r khquant/requirements.txt
+      - name: Cache Financial Data
+        uses: actions/cache@v4
+        with:
+          path: .cache_fin_200.parquet
+          key: fin-data-v1
 
-      - name: Daily Pipeline
-        working-directory: khquant
-        env:
-          KHQUANT_DATA_PATH: ${{ github.workspace }}/khquant-data
-        run: python main.py --mode daily
+      - name: Daily Inference
+        run: python scripts/daily_inference.py
 
-      - name: Commit & Push Data
-        working-directory: khquant-data
-        run: |
-          git config user.name "khquant-bot"
-          git config user.email "bot@khquant.local"
-          git add .
-          git diff --staged --quiet || git commit -m "data: $(date +%Y-%m-%d) daily update"
-          git push
+      - name: Upload Signals
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-signals
+          path: results/
+          retention-days: 30
