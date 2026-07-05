@@ -28,9 +28,13 @@ jobs:
           path: .cache_fin_200.parquet
           key: fin-data-v1
 
+      - name: Debug Path
+        run: |
+          pwd
+          ls src/data/storage.py
+          python -c "import sys; sys.path.insert(0,'.'); print(sys.path[:5]); from src.data.storage import read_daily_bars; print('OK')"
+
       - name: Daily Inference
-        env:
-          PYTHONPATH: ${{ github.workspace }}
         run: python scripts/daily_inference.py
 
       - name: Upload Signals

@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
 """日频推理 — 今日选股 Top30"""
-import sys
+import sys, os
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Actions 兼容: 确保项目根目录在 sys.path
+ROOT = Path(__file__).parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+# PYTHONPATH 兜底
+for p in os.environ.get("PYTHONPATH", "").split(":"):
+    if p and p not in sys.path:
+        sys.path.insert(0, p)
 
 import numpy as np, pandas as pd, json
 from datetime import date, timedelta
