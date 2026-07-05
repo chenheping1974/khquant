@@ -13,7 +13,7 @@ logger = logging.getLogger("fetch")
 
 SINA_URL = "https://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData"
 HEADERS = {"User-Agent": "Mozilla/5.0", "Referer": "https://finance.sina.com.cn/"}
-STOCKS = 200  # 拉前200只
+STOCKS = 0  # 0=全部
 DATALEN = 5   # 最近5天 (增量)
 
 # 取股票列表 (从数据仓库已有数据)
@@ -25,8 +25,9 @@ for f in a_stock_dir.rglob("data.parquet"):
         existing.update(df["symbol"].unique().tolist())
     except: pass
 
-symbols = sorted(existing)[:STOCKS]
-logger.info(f"数据仓库已有 {len(existing)} 只, 拉取前 {len(symbols)} 只增量 (最近{DATALEN}天)")
+symbols = sorted(existing)
+if STOCKS > 0: symbols = symbols[:STOCKS]
+logger.info(f"数据仓库已有 {len(existing)} 只, 拉取 {len(symbols)} 只增量 (最近{DATALEN}天)")
 
 from src.data.storage import write_daily_bars
 
