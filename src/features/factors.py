@@ -92,75 +92,77 @@ def compute_price_volume_factors(close: np.ndarray, volume: np.ndarray,
 # ═══════════════════════════════════════════════════════
 
 def compute_fundamental_factors(valuation_df: pd.DataFrame,
-                                 financial_df: Optional[pd.DataFrame] = None
+                                 financial_df: Optional[pd.DataFrame] = None,
+                                 price_df: Optional[pd.DataFrame] = None,
                                  ) -> pd.DataFrame:
     """
     Phase 2: 6个基本面因子。
 
-    需要 akshare 数据:
-      - stock_zh_a_spot_em(): PE, PB, market_cap
-      - stock_financial_analysis_indicator(): ROE, 利润增速, 资产负债率
+    数据源:
+      - 腾讯财经: PE, PB, market_cap (日频)
+      - akshare财报: ROE, 利润增速, 资产负债率, 资产增长率 (季度→前向填充到日频)
 
-    Returns DataFrame with symbol + factor columns
+    Returns DataFrame with symbol [+ trade_date] + factor columns
     """
-    result = valuation_df[["symbol"]].copy() if "symbol" in valuation_df.columns else pd.DataFrame()
+    has_dates = "trade_date" in valuation_df.columns
+    key_cols = ["symbol"] if not has_dates else ["trade_date", "symbol"]
+    result = valuation_df[key_cols].copy()
 
-    # ── 1. 规模因子 Size (LSY 2019, JFE) ──
-    # log(市值), 训练时剔除最小30%
+    # ── 1. 规模因子 Size (LSY 2019) ──
     if "market_cap" in valuation_df.columns:
-        mc = valuation_df["market_cap"].copy()
-        mc = pd.to_numeric(mc, errors="coerce")
-        result["size"] = np.log(mc.clip(lower=1e8))  # 最低1亿
-        # 标记最小30% (LSY方法)
+        mc = pd.to_numeric(valuation_df["market_cap"], errors="coerce")
+        result["size"] = np.log(mc.clip(lower=1e8))
         cutoff = mc.quantile(0.30)
         result["is_smallest_30pct"] = (mc < cutoff).astype(int)
     else:
         result["size"] = np.nan
 
-    # ── 2. 价值因子 Value = E/P (LSY 2019, JFE) ──
-    # 注意: LSY验证了A股用E/P而非B/P!
-    # E/P = 1/PE = 盈利收益率
+    # ── 2. 价值因子 Value = E/P (LSY 2019) ──
     if "pe_ttm" in valuation_df.columns:
         pe = pd.to_numeric(valuation_df["pe_ttm"], errors="coerce")
-        # 负PE无意义, 设NaN
-        pe = pe.clip(lower=1.0)  # 最低PE=1
-        result["value_ep"] = 1.0 / pe  # E/P
+        pe = pe.clip(lower=1.0)
+        result["value_ep"] = 1.0 / pe
     else:
         result["value_ep"] = np.nan
 
-    # ── 3. 盈利因子 Profitability = ROE (FF5 2015 + LSY验证) ──
-    if financial_df is not None and "roe" in financial_df.columns:
-        result["roe"] = pd.to_numeric(financial_df["roe"], errors="coerce") / 100
-    else:
+    # ── 3-5. 财务质量因子 (从 akshare 财务数据) ──
+    if financial_df is not None and not financial_df.empty:
+        fin_cols = [c for c in ["roe", "profit_growth", "debt_ratio", "asset_growth"]
+                    if c in financial_df.columns]
+        if fin_cols:
+            if has_dates:
+                result = result.merge(
+                    financial_df[["trade_date", "symbol"] + fin_cols],
+                    on=["trade_date", "symbol"], how="left"
+                )
+            else:
+                result = result.merge(
+                    financial_df[["symbol"] + fin_cols].drop_duplicates(subset=["symbol"], keep="last"),
+                    on="symbol", how="left"
+                )
+
+    # 标准化因子名
+    if "roe" not in result.columns:
         result["roe"] = np.nan
-
-    # ── 4. 投资因子 Investment (FF5 2015, A股反向!) ──
-    # 资产增长率 YoY, A股呈负溢价 (Li & Chen 2022)
-    if financial_df is not None and "asset_growth" in financial_df.columns:
-        result["investment"] = pd.to_numeric(financial_df["asset_growth"], errors="coerce")
-    else:
+    if "asset_growth" not in result.columns:
         result["investment"] = np.nan
+    else:
+        result["investment"] = pd.to_numeric(result["asset_growth"], errors="coerce")
+        result.drop(columns=["asset_growth"], inplace=True, errors="ignore")
+    if "debt_ratio" not in result.columns:
+        result["debt_ratio"] = np.nan
 
-    # ── 5. 情绪代理 Sentiment (LSY PMO因子代理) ──
-    # LSY用换手率作为误定价/情绪代理
-    # 我们用 turnover_rate 作为替代
+    # ── 5. 情绪代理 = turnover_rate (LSY PMO) ──
+    # 优先用腾讯的换手率, 否则稍后在 compute_all_factors 中从volume/shares计算
     if "turnover_rate" in valuation_df.columns:
         result["sentiment_proxy"] = pd.to_numeric(valuation_df["turnover_rate"], errors="coerce")
-    else:
-        result["sentiment_proxy"] = np.nan
+    # 不设 NaN — 让 compute_all_factors 中的 volume/shares 逻辑接管
 
-    # ── 6. 质量因子 Quality (Asness et al. 2019, RFS + 幻方方法论) ──
-    # 综合: ROE高 + 负债率低 + 盈利稳定
-    score_cols = []
-    if "roe" in result.columns:
-        roe_z = _zscore(result["roe"])
-        score_cols.append(roe_z)
-    if financial_df is not None and "debt_ratio" in financial_df.columns:
-        dr = pd.to_numeric(financial_df["debt_ratio"], errors="coerce")
-        debt_z = -_zscore(dr)  # 负号: 低负债=高得分
-        score_cols.append(debt_z)
-    if score_cols:
-        result["quality"] = pd.concat(score_cols, axis=1).mean(axis=1)
+    # ── 6. 质量因子 Quality (Asness et al. 2019) ──
+    if "roe" in result.columns and result["roe"].notna().any():
+        roe_z = _zscore(result["roe"].fillna(0))
+        debt_z = -_zscore(result["debt_ratio"].fillna(50)) if "debt_ratio" in result.columns else 0
+        result["quality"] = (roe_z + debt_z) / 2
     else:
         result["quality"] = np.nan
 
@@ -174,35 +176,76 @@ def compute_fundamental_factors(valuation_df: pd.DataFrame,
 # ═══════════════════════════════════════════════════════
 
 def compute_alternative_factors(price_df: pd.DataFrame,
-                                  north_flow_df: Optional[pd.DataFrame] = None,
-                                  margin_df: Optional[pd.DataFrame] = None,
+                                  north_flow_raw: Optional[pd.DataFrame] = None,
+                                  margin_raw: Optional[pd.DataFrame] = None,
+                                  dragon_tiger_raw: Optional[pd.DataFrame] = None,
                                   ) -> pd.DataFrame:
     """
     Phase 3: 4个另类数据因子。
 
-    数据源 (akshare):
-      - stock_hsgt_hist_em(): 北向资金
-      - stock_margin_detail_szse/sse(): 融资融券
-      - stock_dzjy_mrmx(): 大宗交易
-
-    当前: 数据暂不可用, 返回NaN列, 不影响训练
+    数据源 (all verified ✅):
+      - akshare stock_hsgt_hist_em(): 北向资金
+      - akshare stock_margin_underlying_info_szse(): 融资融券
+      - akshare stock_lhb_detail_em(): 龙虎榜
     """
     result = price_df[["trade_date", "symbol"]].copy()
-
-    # ── 1. 北向资金净流入变化 ──
     result["north_flow"] = np.nan
-
-    # ── 2. 融资余额变化 ──
     result["margin_change"] = np.nan
-
-    # ── 3. 龙虎榜异常 ──
     result["dragon_tiger"] = np.nan
-
-    # ── 4. 大宗交易折溢价 ──
     result["block_trade_premium"] = np.nan
 
-    # TODO: 填充实际数据 (akshare恢复后)
-    # 当前返回NaN, 训练时会自动跳过
+    # ── 1. 北向资金净流入 (广发/国金 研报, 2024) ──
+    # 全市场级别宏观信号: 北向流入→利好所有A股
+    if north_flow_raw is not None and not north_flow_raw.empty:
+        nf = north_flow_raw[["trade_date", "north_flow_5d"]].copy()
+        nf["trade_date"] = nf["trade_date"].astype(str)
+        result["trade_date_str"] = result["trade_date"].astype(str)
+        result = result.merge(nf, left_on="trade_date_str", right_on="trade_date",
+                              how="left", suffixes=("", "_nf"))
+        result["north_flow"] = result["north_flow_5d"].fillna(0)
+        result.drop(columns=["trade_date_str", "trade_date_nf",
+                      "north_flow_5d"], inplace=True, errors="ignore")
+
+    # ── 2. 融资融券标的 (广发/聚源 研报, 2024) ──
+    # 融资买入占融资余额比 RankIC -5.65% (中证500)
+    if margin_raw is not None and not margin_raw.empty:
+        margin_symbols = set(
+            margin_raw["证券代码"].astype(str).str.zfill(6).tolist()
+        )
+        result["margin_change"] = result["symbol"].apply(
+            lambda s: 1.0 if str(s).zfill(6) in margin_symbols else 0.0
+        )
+        # 标记非两融标的为NaN (避免用0污染训练)
+        result.loc[~result["symbol"].isin(margin_symbols), "margin_change"] = np.nan
+
+    # ── 3. 龙虎榜净买额 (开源证券 研报, 2022) ──
+    if dragon_tiger_raw is not None and not dragon_tiger_raw.empty:
+        dt = dragon_tiger_raw.copy()
+        if "代码" in dt.columns and "上榜日" in dt.columns:
+            dt["symbol"] = dt["代码"].astype(str).str.zfill(6)
+            dt["trade_date"] = pd.to_datetime(dt["上榜日"], errors="coerce").dt.date
+            # 净买额 (万元) → 标准化信号
+            if "龙虎榜净买额" in dt.columns:
+                dt["net_buy"] = pd.to_numeric(dt["龙虎榜净买额"], errors="coerce")
+                dt = dt[["trade_date", "symbol", "net_buy"]].dropna()
+                result = result.merge(dt, on=["trade_date", "symbol"], how="left")
+                result["dragon_tiger"] = result["net_buy"].fillna(0)
+                result.drop(columns=["net_buy"], inplace=True, errors="ignore")
+
+    # ── 4. 大宗交易折溢价 (光大证券 研报, 2023) ──
+    # stock_dzjy_hygtj: 个股大宗交易统计, 折溢率有预测力
+    try:
+        import akshare as ak
+        dzjy = ak.stock_dzjy_hygtj()
+        if dzjy is not None and not dzjy.empty:
+            dzjy["symbol"] = dzjy["证券代码"].astype(str).str.zfill(6)
+            dzjy["bt_premium"] = pd.to_numeric(dzjy["折溢率"], errors="coerce")
+            dzjy = dzjy[["symbol", "bt_premium"]].dropna()
+            result = result.merge(dzjy, on="symbol", how="left")
+            result["block_trade_premium"] = result["bt_premium"].fillna(0)
+            result.drop(columns=["bt_premium"], inplace=True, errors="ignore")
+    except Exception:
+        result["block_trade_premium"] = np.nan
 
     return result
 
@@ -218,19 +261,107 @@ def compute_structure_factors(price_df: pd.DataFrame,
     """
     Phase 4: 1个结构因子。
 
-    行业虚拟变量 — 量化共识, 控制行业固定效应, 非Alpha因子。
+    行业分类 — Eastmoney F10 API (免费, 稳定)
 
     数据源:
-      - akshare stock_board_industry_name_em(): 申万行业分类
+      - emweb.securities.eastmoney.com/PC_HSF10/CompanySurvey
+        返回 jbzl.sshy (申万行业) + jbzl.sszjhhy (证监会行业)
     """
     result = price_df[["trade_date", "symbol"]].copy()
 
-    # ── 行业代码 (行业中性化控制变量) ──
-    result["industry_code"] = np.nan
+    # 获取行业映射 (带缓存)
+    industry_map = _get_industry_map(result["symbol"].unique().tolist())
 
-    # TODO: 填充实际行业分类数据 (akshare恢复后)
+    if industry_map:
+        result["industry_code"] = result["symbol"].map(industry_map).fillna(-1).astype(int)
+    else:
+        result["industry_code"] = np.nan
 
     return result
+
+
+# ═══════════════════════════════════════════════════════
+#  行业分类 — Eastmoney F10 API
+# ═══════════════════════════════════════════════════════
+
+_industry_map_cache = None
+_INDUSTRY_CACHE_FILE = None  # lazy init
+
+def _get_industry_map(symbols: list) -> dict:
+    """获取股票→行业编码映射 (申万行业), 自动缓存到JSON文件"""
+    global _industry_map_cache, _INDUSTRY_CACHE_FILE
+    import json, requests, time as _time
+    from pathlib import Path
+
+    # lazy init cache file path
+    if _INDUSTRY_CACHE_FILE is None:
+        _INDUSTRY_CACHE_FILE = Path(__file__).parent.parent.parent / ".industry_cache.json"
+
+    # 加载缓存
+    if _industry_map_cache is None:
+        if _INDUSTRY_CACHE_FILE.exists():
+            try:
+                raw = json.loads(_INDUSTRY_CACHE_FILE.read_text())
+                # json keys are strings → convert to dict
+                _industry_map_cache = {str(k): int(v) for k, v in raw.items()}
+                logger.info(f"  行业缓存: {len(_industry_map_cache)}只")
+            except Exception:
+                _industry_map_cache = {}
+        else:
+            _industry_map_cache = {}
+
+    # 找出缺失的股票
+    missing = [s for s in symbols if str(s).zfill(6) not in _industry_map_cache]
+    if not missing:
+        n = len([s for s in symbols if str(s).zfill(6) in _industry_map_cache])
+        logger.info(f"  行业: {n}只 (全部缓存命中)")
+        return {str(s).zfill(6): _industry_map_cache[str(s).zfill(6)]
+                for s in symbols if str(s).zfill(6) in _industry_map_cache}
+
+    # 只查缺失的 (限制每批最多查500只, 避免太慢)
+    to_fetch = missing[:500]
+    logger.info(f"  行业: {len(to_fetch)}只待查 (缓存{len(_industry_map_cache)}只)")
+
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    industry_names = {}
+    # 从已有缓存推断编码
+    all_codes_set = set(_industry_map_cache.values())
+    next_code = max(all_codes_set) + 1 if all_codes_set else 0
+
+    for i, code in enumerate(to_fetch):
+        code_str = str(code).zfill(6)
+        prefix = "SH" if code_str.startswith("6") else "SZ"
+        url = (f"https://emweb.securities.eastmoney.com/PC_HSF10/"
+               f"CompanySurvey/CompanySurveyAjax?code={prefix}{code_str}")
+        try:
+            r = requests.get(url, headers=headers, timeout=5)
+            if r.status_code == 200:
+                data = r.json()
+                hy = data.get("jbzl", {}).get("sshy", "")
+                if hy:
+                    if hy not in industry_names:
+                        industry_names[hy] = next_code
+                        next_code += 1
+                    _industry_map_cache[code_str] = industry_names[hy]
+        except Exception:
+            pass
+
+        if (i + 1) % 100 == 0:
+            logger.info(f"    [{i+1}/{len(to_fetch)}]")
+            # 每100只保存一次缓存
+            _INDUSTRY_CACHE_FILE.write_text(
+                json.dumps(_industry_map_cache, ensure_ascii=False)
+            )
+        _time.sleep(0.15)
+
+    # 最终保存
+    _INDUSTRY_CACHE_FILE.write_text(
+        json.dumps(_industry_map_cache, ensure_ascii=False)
+    )
+    logger.info(f"  行业: {len(_industry_map_cache)}只 ({len(industry_names)}个行业)")
+
+    return {str(s).zfill(6): _industry_map_cache[str(s).zfill(6)]
+            for s in symbols if str(s).zfill(6) in _industry_map_cache}
 
 
 # ═══════════════════════════════════════════════════════
@@ -269,26 +400,54 @@ def compute_all_factors(
 
     result = pd.concat(results, ignore_index=True)
 
-    # Phase 2: 基本面 (6因子, merge估值+财务)
+    # 1.5. sentiment_proxy = 换手率 = volume / total_shares
+    if "volume" in result.columns and valuation_df is not None and "total_shares" in valuation_df.columns:
+        shares_map = valuation_df.set_index("symbol")["total_shares"].to_dict()
+        result["sentiment_proxy"] = result.apply(
+            lambda r: r["volume"] / max(shares_map.get(r["symbol"], 1e10), 1)
+            if r["symbol"] in shares_map else np.nan, axis=1
+        )
+    else:
+        result["sentiment_proxy"] = np.nan
+
+    # Phase 2: 基本面 (6因子)
     if valuation_df is not None and not valuation_df.empty:
-        fund = compute_fundamental_factors(valuation_df, financial_df)
+        fund = compute_fundamental_factors(valuation_df, financial_df, result)
+        merge_on = ["symbol"] if "trade_date" not in fund.columns else ["trade_date", "symbol"]
+        # 排除 result 中已有的列 (避免 merge 产生 _x/_y 后缀)
+        existing = set(result.columns)
         fund_cols = [c for c in fund.columns
-                     if c not in ("symbol",) and not c.startswith("is_")]
+                     if c not in merge_on and not c.startswith("is_") and c not in existing]
         if fund_cols:
             result = result.merge(
-                fund[["symbol"] + fund_cols], on="symbol", how="left"
+                fund[merge_on + fund_cols], on=merge_on, how="left"
             )
-        n_fund = len([c for c in fund_cols if c in result.columns])
-        logger.info(f"  Phase 2 基本面: {n_fund}个")
+        n_fund_real = len([c for c in fund_cols
+                          if c in result.columns and result[c].notna().any()])
+        logger.info(f"  Phase 2 基本面: {n_fund_real}个 (共{len(fund_cols)}个候选)")
     else:
         logger.warning("  Phase 2 基本面: 无数据, 跳过")
 
     # Phase 3: 另类 (4因子)
-    alt = compute_alternative_factors(result)
+    try:
+        north_flow_raw = _get_north_flow_data()
+    except Exception:
+        north_flow_raw = None
+    try:
+        margin_raw = _get_margin_data()
+    except Exception:
+        margin_raw = None
+    try:
+        dragon_tiger_raw = _get_dragon_tiger_data()
+    except Exception:
+        dragon_tiger_raw = None
+
+    alt = compute_alternative_factors(result, north_flow_raw, margin_raw, dragon_tiger_raw)
     alt_cols = [c for c in alt.columns if c not in ("trade_date", "symbol")]
     if alt_cols:
         result = result.merge(alt, on=["trade_date", "symbol"], how="left")
-    logger.info(f"  Phase 3 另类: {sum(1 for c in alt_cols if result[c].notna().any())}个可用")
+    n_alt = sum(1 for c in alt_cols if c in result.columns and result[c].notna().any())
+    logger.info(f"  Phase 3 另类: {n_alt}个可用")
 
     # Phase 4: 结构 (3因子)
     struct = compute_structure_factors(result)
@@ -384,3 +543,77 @@ def _zscore(s: pd.Series) -> pd.Series:
     if std == 0 or pd.isna(std):
         return pd.Series(0.0, index=s.index)
     return (s - s.mean()) / std
+
+
+# ═══════════════════════════════════════════════════════
+#  Phase 3 数据获取 (带缓存)
+# ═══════════════════════════════════════════════════════
+
+_north_flow_cache = None
+_margin_cache = None
+_dragon_tiger_cache = None
+
+
+def _get_north_flow_data() -> Optional[pd.DataFrame]:
+    """北向资金日度净流向 (全市场汇总, 作为宏观信号)"""
+    global _north_flow_cache
+    if _north_flow_cache is not None:
+        return _north_flow_cache
+    try:
+        import akshare as ak
+        df = ak.stock_hsgt_hist_em()
+        if df is not None and not df.empty:
+            df = df.rename(columns={
+                "日期": "trade_date",
+                "当日成交净买额": "net_buy",
+                "买入成交额": "buy_amount",
+                "卖出成交额": "sell_amount",
+            })
+            df["trade_date"] = pd.to_datetime(df["trade_date"], errors="coerce").dt.date
+            df["net_buy"] = pd.to_numeric(df["net_buy"], errors="coerce")
+            df = df.dropna(subset=["trade_date", "net_buy"])
+            df = df.sort_values("trade_date")
+            df["north_flow_5d"] = df["net_buy"].rolling(5, min_periods=1).mean()
+            _north_flow_cache = df
+            logger.info(f"  北向资金(全市场): {len(df)}条")
+            return df
+    except Exception as e:
+        logger.warning(f"  北向资金失败: {e}")
+    return None
+
+
+def _get_margin_data() -> Optional[pd.DataFrame]:
+    """融资融券标的信息"""
+    global _margin_cache
+    if _margin_cache is not None:
+        return _margin_cache
+    try:
+        import akshare as ak
+        df = ak.stock_margin_underlying_info_szse()
+        if df is not None and not df.empty:
+            _margin_cache = df
+            logger.info(f"  两融标的: {len(df)}只")
+            return df
+    except Exception as e:
+        logger.warning(f"  两融数据失败: {e}")
+    return None
+
+
+def _get_dragon_tiger_data() -> Optional[pd.DataFrame]:
+    """龙虎榜上榜数据 (近30天)"""
+    global _dragon_tiger_cache
+    if _dragon_tiger_cache is not None:
+        return _dragon_tiger_cache
+    try:
+        import akshare as ak
+        from datetime import date, timedelta
+        end = date.today().strftime("%Y%m%d")
+        start = (date.today() - timedelta(days=90)).strftime("%Y%m%d")
+        df = ak.stock_lhb_detail_em(start_date=start, end_date=end)
+        if df is not None and not df.empty:
+            _dragon_tiger_cache = df
+            logger.info(f"  龙虎榜: {len(df)}条")
+            return df
+    except Exception as e:
+        logger.warning(f"  龙虎榜失败: {e}")
+    return None

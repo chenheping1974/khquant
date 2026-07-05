@@ -8,47 +8,57 @@
     "amihud",
     "size",
     "value_ep",
-    "quality"
+    "roe",
+    "investment",
+    "sentiment_proxy",
+    "quality",
+    "north_flow",
+    "margin_change",
+    "dragon_tiger",
+    "block_trade_premium",
+    "industry_code"
   ],
-  "n_features": 8,
-  "n_estimators": 13,
+  "n_features": 16,
+  "n_estimators": 2,
   "label_meta": {
     "5": {
-      "mean": 0.002380412736900256,
-      "std": 0.07113881757251972,
-      "coverage": 4559757
+      "mean": 0.002399845128740192,
+      "std": 0.07114337728175972,
+      "coverage": 4555449
     },
     "10": {
-      "mean": 0.004327095708870604,
-      "std": 0.09674128549524434,
-      "coverage": 4533729
+      "mean": 0.004339129416526344,
+      "std": 0.09674458585068532,
+      "coverage": 4529423
     },
     "20": {
-      "mean": 0.007472508589815071,
-      "std": 0.13130094296657185,
-      "coverage": 4484286
+      "mean": 0.007455575005684573,
+      "std": 0.13130082684512823,
+      "coverage": 4479981
     }
   },
   "label_quality": {
     "horizon": 10,
-    "count": 4533729,
-    "mean": 0.004327095708870604,
-    "std": 0.09674128549524434,
-    "sharpe": 0.7100434371678358,
-    "daily_autocorr": 0.9025671125822673,
-    "pct_positive": 0.48011890432798254
+    "count": 4529423,
+    "mean": 0.004339129416526344,
+    "std": 0.09674458585068532,
+    "sharpe": 0.7119937870449119,
+    "daily_autocorr": 0.9026418868518863,
+    "pct_positive": 0.4802353412344133
   },
-  "train_samples": 3383507,
-  "valid_samples": 1179511,
+  "train_samples": 3379198,
+  "valid_samples": 1181015,
   "top10_features": [
-    "value_ep",
-    "size",
     "amihud",
-    "short_reversal",
+    "industry_code",
     "low_volatility",
+    "short_reversal",
+    "value_ep",
+    "sentiment_proxy",
+    "quality",
+    "size",
     "momentum_12m1m",
-    "beta",
-    "quality"
+    "north_flow"
   ],
-  "train_date": "2026-07-03"
+  "train_date": "2026-07-04"
 }

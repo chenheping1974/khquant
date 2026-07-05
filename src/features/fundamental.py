@@ -83,42 +83,48 @@ def fetch_financial_quality(symbols: list, max_symbols: int = 200) -> pd.DataFra
 
     for i, code in enumerate(symbols):
         try:
-            df = ak.stock_financial_analysis_indicator(symbol=code)
+            # start_year 必须传, 否则API返回空
+            df = ak.stock_financial_analysis_indicator(
+                symbol=str(code).zfill(6), start_year="2023"
+            )
             if df is None or df.empty:
                 continue
 
-            # 标准化列名
+            # 标准化列名 — 精确匹配 (列名后可能有单位)
             col_map = {
                 "净资产收益率": "roe",
                 "净利润增长率": "profit_growth",
                 "营业总收入增长率": "revenue_growth",
                 "资产负债率": "debt_ratio",
+                "总资产增长率": "asset_growth",
+                "摊薄每股收益": "eps",
+                "每股净资产_调整前": "bvps",
             }
-            found_cols = {}
-            for cn, en in col_map.items():
+            rename = {}
+            for cn_name, en_name in col_map.items():
                 for c in df.columns:
-                    if cn in c:
-                        found_cols[en] = c
+                    if cn_name in c:
+                        rename[c] = en_name
                         break
 
-            if not found_cols:
+            if not rename:
                 continue
 
-            df = df.rename(columns=found_cols)
-            df["symbol"] = code
-            # 日期列: 取第一列为日期
-            date_col = df.columns[0]
-            df["report_date"] = pd.to_datetime(date_col, errors="coerce")
+            df = df.rename(columns=rename)
+            df["symbol"] = str(code).zfill(6)
+            # 日期列
+            date_col = "日期" if "日期" in df.columns else df.columns[0]
+            df["report_date"] = pd.to_datetime(df[date_col], errors="coerce")
             df = df.dropna(subset=["report_date"])
 
-            keep = ["symbol", "report_date"] + list(found_cols.keys())
+            keep = ["symbol", "report_date"] + list(rename.values())
             all_data.append(df[[c for c in keep if c in df.columns]])
 
         except Exception:
             pass
 
-        if (i + 1) % 50 == 0:
-            logger.info(f"  [{i+1}/{len(symbols)}]")
+        if (i + 1) % 100 == 0:
+            logger.info(f"  [{i+1}/{len(symbols)}] {len(all_data)}只有数据")
         time.sleep(REQUEST_DELAY)
 
     if not all_data:

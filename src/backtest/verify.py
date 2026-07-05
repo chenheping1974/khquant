@@ -97,7 +97,15 @@ def backtest_a_stock_ranking(
 
     # 2. 计算因子
     logger.info("[2/6] 计算统一因子...")
-    factor_df = compute_all_factors(raw_df)
+    # 获取估值数据 (腾讯财经)
+    valuation_df = None
+    try:
+        from src.data.tencent_fetcher import fetch_valuation_batch
+        symbols_list = raw_df["symbol"].unique().tolist()
+        valuation_df = fetch_valuation_batch(symbols=symbols_list[:500])
+    except Exception as e:
+        logger.warning(f"  估值数据跳过: {e}")
+    factor_df = compute_all_factors(raw_df, valuation_df)
 
     # 3. 生成信号
     logger.info("[3/6] 生成信号...")

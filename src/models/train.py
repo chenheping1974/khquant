@@ -109,14 +109,17 @@ def train_a_stock_ranker(
     except Exception as e:
         logger.warning(f"  估值数据失败: {e}")
 
-    # akshare财报: ROE/负债率/增长率
+    # akshare财报: ROE/负债率/增长率 (季度, 取最新一期)
+    financial_df = None
     try:
         from src.features.fundamental import fetch_financial_quality
-        financial_df = fetch_financial_quality(
-            symbols_list[:500] if quick else symbols_list[:200],
-        )
-        if financial_df is not None and not financial_df.empty:
-            logger.info(f"  财务(akshare): {len(financial_df)}行")
+        n_fin = 100 if quick else 300
+        raw_fin = fetch_financial_quality(symbols_list[:n_fin])
+        if raw_fin is not None and not raw_fin.empty:
+            # 每只股票取最新一期季报
+            raw_fin = raw_fin.sort_values(["symbol", "report_date"])
+            financial_df = raw_fin.groupby("symbol").last().reset_index()
+            logger.info(f"  财务(akshare): {len(raw_fin)}条季报, {len(financial_df)}只最新数据")
     except Exception as e:
         logger.warning(f"  财务数据失败: {e}")
 
