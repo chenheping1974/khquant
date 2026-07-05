@@ -1,4 +1,4 @@
-name: Daily Inference
+name: Daily Pipeline
 
 on:
   schedule:
@@ -6,13 +6,20 @@ on:
   workflow_dispatch:
 
 jobs:
-  infer:
+  daily:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Checkout Data
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/khquant-data
+          path: khquant-data
+          token: ${{ secrets.GH_PAT }}
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -22,18 +29,19 @@ jobs:
       - name: Install Deps
         run: pip install pandas numpy pyarrow requests akshare python-dotenv
 
-      - name: Cache Financial Data
-        uses: actions/cache@v4
-        with:
-          path: .cache_fin_200.parquet
-          key: fin-data-v1
+      - name: Fetch Today's Data (Sina)
+        env:
+          KHQUANT_DATA_PATH: ${{ github.workspace }}/khquant-data
+        run: python scripts/fetch_incremental.py
 
-      - name: Checkout Data
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ github.repository_owner }}/khquant-data
-          path: khquant-data
-          token: ${{ secrets.GH_PAT }}
+      - name: Commit & Push Data
+        working-directory: khquant-data
+        run: |
+          git config user.name "khquant-bot"
+          git config user.email "bot@khquant.local"
+          git add .
+          git diff --staged --quiet || git commit -m "data: $(date +%Y-%m-%d) daily update"
+          git push
 
       - name: Daily Inference
         env:
