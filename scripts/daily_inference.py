@@ -107,21 +107,32 @@ for sym in syms[:200]:
     ind_code=ind_map.get(str(sym),-1)
     tier_score=float(tiers.get(str(ind_code),0) if isinstance(tiers.get(str(ind_code),0),(int,float)) else (1.0 if tiers.get(str(ind_code))==1 else 0.5 if tiers.get(str(ind_code))==2 else 0))
 
-    # Composite (简化权重)
-    score=0; n_factors=0
-    for val_v,w in [(v_ep,0.1),(v_bp,0.1),(mom,0.15),(rev,0.15),(q_roe,0.2),(q_leverage,0.1),(q_fscore,0.1),(a_visit,0.05),(tier_score,0.05)]:
-        if not pd.isna(val_v): score+=val_v*w; n_factors+=1
-
     results.append({
-        'symbol':sym,'composite':score,
-        'v_ep':v_ep,'v_bp':v_bp,'momentum':mom,'reversal':rev,
+        'symbol':sym,'v_ep':v_ep,'v_bp':v_bp,'momentum':mom,'reversal':rev,
         'q_roe':q_roe,'q_leverage':q_leverage,'q_fscore':q_fscore,
         'a_visit':a_visit,'strategic':tier_score,
         'industry':ind_names.get(str(ind_code),f'行业{ind_code}')
     })
 
-df=pd.DataFrame(results).dropna(subset=['composite'])
-df=df.sort_values('composite',ascending=False).head(30)
+df=pd.DataFrame(results)
+# Z-score标准化各因子
+factor_cols = ['v_ep','v_bp','momentum','reversal','q_roe','q_leverage','q_fscore']
+for col in factor_cols:
+    if col in df.columns and df[col].notna().any():
+        mu,sigma = df[col].mean(), df[col].std()
+        if sigma and sigma>0: df[col+'_z'] = (df[col]-mu)/sigma
+        else: df[col+'_z'] = 0
+    else: df[col+'_z'] = 0
+
+# 加权总分 (BlackRock: 基本面40% + 价量30% + 另类15% + 其他15%)
+df['composite'] = (
+    df['q_roe_z'].fillna(0)*0.20 + df['q_leverage_z'].fillna(0)*0.10 + df['q_fscore_z'].fillna(0)*0.10 +
+    df['v_ep_z'].fillna(0)*0.10 + df['v_bp_z'].fillna(0)*0.10 +
+    df['momentum_z'].fillna(0)*0.15 + df['reversal_z'].fillna(0)*0.15 +
+    df['strategic'].fillna(0)*0.05 + df['a_visit'].apply(lambda x: min(x,50)/50*0.05)
+)
+
+df=df.dropna(subset=['composite']).sort_values('composite',ascending=False).head(30)
 
 # 获取股票名称 (从腾讯财经)
 name_map = {}
