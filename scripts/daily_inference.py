@@ -144,3 +144,26 @@ for ind,cnt in df['industry'].value_counts().head(10).items():
 
 fout.close()
 print(f"\n结果已保存: {out_path}")
+
+# JSON 输出 (供其他项目HTTP读取)
+import json
+json_data = {
+    "date": str(latest_date.date()),
+    "updated": str(pd.Timestamp.now()),
+    "top30": []
+}
+for _, r in df.iterrows():
+    json_data["top30"].append({
+        "rank": int(len(json_data["top30"]) + 1),
+        "symbol": r["symbol"],
+        "name": name_map.get(r["symbol"], ""),
+        "industry": r["industry"],
+        "score": round(float(r["composite"]), 3),
+        "value": round(float(r.get("v_ep", 0)), 3),
+        "momentum": round(float(r.get("momentum", 0)), 3),
+        "quality": round(float(r.get("q_roe", 0)), 3),
+    })
+
+latest_json = "results/latest.json"
+json.dump(json_data, open(latest_json, "w"), ensure_ascii=False, indent=2)
+print(f"JSON已保存: {latest_json}")

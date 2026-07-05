@@ -48,6 +48,14 @@ jobs:
           KHQUANT_DATA_PATH: ${{ github.workspace }}/khquant-data
         run: python scripts/daily_inference.py
 
+      - name: Commit Results
+        run: |
+          git config user.name "khquant-bot"
+          git config user.email "bot@khquant.local"
+          git add results/latest.json results/signals-*.txt
+          git diff --staged --quiet || git commit -m "signals: $(date +%Y-%m-%d) daily picks"
+          git push
+
       - name: Upload Signals
         uses: actions/upload-artifact@v4
         with:
