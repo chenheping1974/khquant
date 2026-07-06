@@ -66,7 +66,12 @@ from src.data.storage import write_daily_bars
 
 batch = []
 total = 0
+empty_streak = 0
 for i, code in enumerate(symbols):
+    # 前100只全空 → 市场未收盘, 直接退出
+    if i >= 100 and total == 0:
+        logger.info(f"前100只无数据, 市场未收盘, 退出")
+        break
     code = str(code).zfill(6)
     prefix = "sh" if code.startswith("6") else "sz"
     try:
