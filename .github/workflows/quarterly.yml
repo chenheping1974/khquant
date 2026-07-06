@@ -1,0 +1,51 @@
+name: Quarterly Financial Update
+
+on:
+  schedule:
+    # 季报期每周六: 5-6月 / 9月 / 11-12月
+    - cron: '0 6 * * 6'  # 每周六 UTC 6:00 (北京时间 14:00)
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Check Month (skip non-report seasons)
+        run: |
+          MONTH=$(date +%-m)
+          if [ $MONTH -ge 5 ] && [ $MONTH -le 6 ]; then echo "SEASON=true" >> $GITHUB_ENV; fi
+          if [ $MONTH -eq 9 ]; then echo "SEASON=true" >> $GITHUB_ENV; fi
+          if [ $MONTH -ge 11 ] && [ $MONTH -le 12 ]; then echo "SEASON=true" >> $GITHUB_ENV; fi
+          echo "Month=$MONTH, Season=$SEASON"
+
+      - name: Setup Python
+        if: env.SEASON == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Deps
+        if: env.SEASON == 'true'
+        run: pip install pandas numpy pyarrow akshare
+
+      - name: Update Financial Data (Q1)
+        if: env.SEASON == 'true'
+        run: python scripts/download_fin_q1.py
+
+      - name: Commit & Push
+        if: env.SEASON == 'true'
+        run: |
+          git config user.name "khquant-bot"
+          git config user.email "bot@khquant.local"
+          git add .cache_fin_infer.parquet
+          git diff --staged --quiet || git commit -m "data: quarterly financial update $(date +%Y-Q)"
+          git push || true
+
+      - name: Skip (Non-report Season)
+        if: env.SEASON != 'true'
+        run: echo "Not report season, skipping"

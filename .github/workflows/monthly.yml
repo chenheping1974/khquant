@@ -1,0 +1,99 @@
+name: Monthly Data Update
+
+on:
+  schedule:
+    - cron: '0 4 1 * *'  # 每月1号 UTC 4:00 (北京时间 12:00)
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Deps
+        run: pip install pandas numpy pyarrow requests
+
+      - name: Update Shareholder Count
+        run: |
+          python -c "
+import sys; sys.path.insert(0,'.')
+from config import A_STOCK_DIR
+from src.data.storage import read_daily_bars
+import pandas as pd, requests, time
+from datetime import date, timedelta
+end=date.today();start=end-timedelta(days=365*3)
+syms=sorted(read_daily_bars(A_STOCK_DIR,start_date=start,end_date=end,market='a_stock')['symbol'].unique())
+try:
+    old=pd.read_parquet('.cache_holder_all.parquet')
+    done=set(old['symbol'].unique()); rows=old.to_dict('records')
+except: done=set(); rows=[]
+todo=[s for s in syms if s not in done]
+print(f'股东户数: 已有{len(done)} 待拉{len(todo)}')
+for i,code in enumerate(todo):
+    try:
+        r=requests.get('https://datacenter.eastmoney.com/securities/api/data/v1/get',
+            params={'reportName':'RPT_F10_EH_HOLDERNUM','columns':'SECURITY_CODE,END_DATE,HOLDER_TOTAL_NUM',
+            'filter':f'(SECURITY_CODE=\"{code}\")','pageNumber':1,'pageSize':20,
+            'sortTypes':-1,'sortColumns':'END_DATE','source':'HSF10','client':'PC'},
+            headers={'User-Agent':'Mozilla/5.0'},timeout=8)
+        if r.json().get('success'):
+            for row in r.json()['result']['data']:
+                rows.append({'symbol':code,'end_date':row['END_DATE'][:10],'holder_num':int(row['HOLDER_TOTAL_NUM'])})
+    except: pass
+    if (i+1)%500==0: pd.DataFrame(rows).to_parquet('.cache_holder_all.parquet'); print(f'[{i+1}/{len(todo)}] {len(rows)}条')
+    time.sleep(0.04)
+pd.DataFrame(rows).to_parquet('.cache_holder_all.parquet')
+print(f'完成:{len(rows)}条')
+"
+
+      - name: Update Announcements
+        run: |
+          python -c "
+import sys; sys.path.insert(0,'.')
+from config import A_STOCK_DIR
+from src.data.storage import read_daily_bars
+import pandas as pd, requests, time
+from datetime import date, timedelta
+end=date.today();start=end-timedelta(days=365*3)
+syms=sorted(read_daily_bars(A_STOCK_DIR,start_date=start,end_date=end,market='a_stock')['symbol'].unique())
+try:
+    old=pd.read_parquet('.cache_announce.parquet')
+    done=set(old['symbol'].unique()); rows=old.to_dict('records')
+except: done=set(); rows=[]
+todo=[s for s in syms if s not in done]
+print(f'公告: 已有{len(done)} 待拉{len(todo)}')
+pos_kw=['业绩预增','中标','回购','增持','分红','送转','预盈','扭亏','重大合同','突破','获批','注册']
+neg_kw=['减持','亏损','退市','立案','警示','问询','处罚','诉讼','冻结','终止','修正','下调']
+for i,code in enumerate(todo):
+    try:
+        r=requests.get('https://np-anotice-stock.eastmoney.com/api/security/ann',
+            params={'page_size':30,'page_index':1,'ann_type':'A','client_source':'web','stock_list':code},
+            headers={'User-Agent':'Mozilla/5.0'},timeout=8)
+        for item in r.json().get('data',{}).get('list',[]):
+            sc=0; t=item.get('title','')
+            if any(k in t for k in pos_kw): sc=1
+            elif any(k in t for k in neg_kw): sc=-1
+            if sc!=0: rows.append({'symbol':code,'pub_date':item['notice_date'][:10],'score':sc})
+    except: pass
+    if (i+1)%500==0: pd.DataFrame(rows).to_parquet('.cache_announce.parquet'); print(f'[{i+1}/{len(todo)}] {len(rows)}条')
+    time.sleep(0.03)
+pd.DataFrame(rows).to_parquet('.cache_announce.parquet')
+print(f'完成:{len(rows)}条')
+"
+
+      - name: Commit & Push
+        run: |
+          git config user.name "khquant-bot"
+          git config user.email "bot@khquant.local"
+          git add .cache_holder_all.parquet .cache_announce.parquet
+          git diff --staged --quiet || git commit -m "data: monthly update $(date +%Y-%m)"
+          git push || true
