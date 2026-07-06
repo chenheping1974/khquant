@@ -122,12 +122,15 @@ for sym in syms[:N_PE]:  # 全量PE覆盖的股票
         r=sf.iloc[-1]  # 取最新一行
         q_roe=r.get('roe',np.nan)
         q_leverage=-(r.get('debt_ratio',np.nan)) if not pd.isna(r.get('debt_ratio')) else np.nan
-        # F-Score simplified
+        # F-Score (6指标, 缺CFO时用gpMargin+debt替代)
         f=0
         if not pd.isna(r.get('roe')) and r['roe']>0: f+=1
-            if not pd.isna(r.get('CFOtoNP')) and r['CFOtoNP']>0: f+=1
-            if not pd.isna(r.get('CFOtoNP')) and r['CFOtoNP']>1: f+=1
-            q_fscore=f/3.0 if f>0 else np.nan
+        if not pd.isna(r.get('CFOtoNP')) and r['CFOtoNP']>0: f+=1
+        if not pd.isna(r.get('CFOtoNP')) and r['CFOtoNP']>1: f+=1
+        if not pd.isna(r.get('gpMargin')) and r['gpMargin']>0.1: f+=1
+        if not pd.isna(r.get('debt_ratio')) and r['debt_ratio']<0.6: f+=1
+        if not pd.isna(r.get('npMargin')) and r['npMargin']>0.05: f+=1
+        q_fscore=f/6.0
 
     # Alternative
     a_visit=0
