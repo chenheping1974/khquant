@@ -120,9 +120,9 @@ try:
         ep26 = pd.to_numeric(fc.get('2027预测每股收益',ep25),errors='coerce')
         fc['a_eps'] = (ep26/ep25.replace(0,np.nan)-1).clip(-0.5,1.0)
         analyst_map = dict(zip(fc['symbol'], zip(fc['a_buy'], fc['a_eps'])))
-        logger.info(f"分析师: {len(analyst_map)}只")
+        print(f"分析师(实时): {len(analyst_map)}只")
 except Exception as e:
-    logger.warning(f"分析师跳过: {e}")
+    print(f"分析师实时失败: {e}")
 
 results=[]
 for sym in syms[:N_PE]:  # 全量PE覆盖的股票
