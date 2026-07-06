@@ -108,8 +108,22 @@ for sym in syms[:N_PE]:  # 全量PE覆盖的股票
     v_size=-np.log(mktcap) if mktcap and mktcap>0 else np.nan  # 小盘溢价
 
     # Momentum
-    mom=np.nan
-    if n>=252 and c[-21]>0: mom=c[-21]/c[-252]-1
+    mom=np.nan; mom_risk=np.nan; mom_earn=np.nan
+    if n>=252 and c[-21]>0:
+        mom=c[-21]/c[-252]-1  # 价格动量
+        rets_252=np.diff(c[-252:])/np.maximum(np.abs(c[-252:-1]),1e-8)
+        vol_252=np.nanstd(rets_252)*np.sqrt(252)
+        mom_risk=mom/vol_252 if vol_252 and vol_252>0 else np.nan  # 风险调整
+    # 盈利动量
+    sf2=fin[fin['symbol']==sym] if not fin.empty else pd.DataFrame()
+    if not sf2.empty:
+        sf2=sf2.sort_values('pubDate')
+        latest_fin=sf2.iloc[-1]
+        if len(sf2)>=4:
+            prev_fin=sf2.iloc[-5] if len(sf2)>=5 else sf2.iloc[0]
+            np_now=latest_fin.get('netProfit',np.nan)
+            np_prev=prev_fin.get('netProfit',np.nan)
+            if np_now and np_prev and np_prev!=0: mom_earn=np_now/np_prev-1
 
     # Reversal
     rev=np.nan
@@ -157,7 +171,8 @@ for sym in syms[:N_PE]:  # 全量PE覆盖的股票
     a_buy, a_eps = analyst_map.get(sym, (np.nan, np.nan))
 
     results.append({
-        'symbol':sym,'v_ep':v_ep,'v_bp':v_bp,'v_size':v_size,'mktcap_raw':mktcap,'momentum':mom,'reversal':rev,
+        'symbol':sym,'v_ep':v_ep,'v_bp':v_bp,'v_size':v_size,'mktcap_raw':mktcap,
+        'm_price':mom,'m_risk_adj':mom_risk,'m_cross':0,'m_earn':mom_earn,'reversal':rev,
         'q_roe':q_roe,'q_leverage':q_leverage,'q_fscore':q_fscore,
         'a_visit':a_visit,'a_buy':a_buy,'a_eps':a_eps,'a_announce':a_announce,'strategic':tier_score,
         'industry':ind_names.get(str(ind_code),f'行业{ind_code}')
@@ -173,7 +188,12 @@ if 'mktcap_raw' in df.columns and 'v_size' in df.columns:
     print(f"  Size过滤: {n_small}/{len(df)} 只设为0 (最小30%市值)")
 
 # Z-score标准化各因子
-factor_cols = ['v_ep','v_bp','v_size','momentum','reversal','q_roe','q_leverage','q_fscore','a_buy','a_eps','a_announce']
+factor_cols = ['v_ep','v_bp','v_size','m_price','m_risk_adj','m_cross','m_earn','reversal','q_roe','q_leverage','q_fscore','a_buy','a_eps','a_announce']
+
+# 截面动量: 每日 m_price 的百分位排名
+if 'm_price' in df.columns and df['m_price'].notna().any():
+    df['m_cross'] = df['m_price'].rank(pct=True)  # 0~1
+
 for col in factor_cols:
     if col in df.columns and df[col].notna().any():
         mu,sigma = df[col].mean(), df[col].std()
@@ -183,11 +203,16 @@ for col in factor_cols:
 
 # 加权总分 (BlackRock: 基本面40% + 价量30% + 另类15% + 其他15%)
 df['composite'] = (
-    df['q_roe_z'].fillna(0)*0.20 + df['q_leverage_z'].fillna(0)*0.10 + df['q_fscore_z'].fillna(0)*0.10 +
-    df['v_ep_z'].fillna(0)*0.08 + df['v_bp_z'].fillna(0)*0.05 + df['v_size_z'].fillna(0)*0.04 +
-    df['momentum_z'].fillna(0)*0.05 + df['reversal_z'].fillna(0)*0.08 +
-    df['a_buy_z'].fillna(0)*0.05 + df['a_eps_z'].fillna(0)*0.05 +
-    df['a_announce_z'].fillna(0)*0.05 + df['a_visit'].apply(lambda x: min(x,30)/30*0.05) +
+    # 基本面 40%: Quality
+    df['q_roe_z'].fillna(0)*0.15 + df['q_leverage_z'].fillna(0)*0.10 + df['q_fscore_z'].fillna(0)*0.15 +
+    # 价量 30%: Value(15) + Reversal(10) + 动量-截面(5)
+    df['v_ep_z'].fillna(0)*0.08 + df['v_bp_z'].fillna(0)*0.04 + df['v_size_z'].fillna(0)*0.03 +
+    df['reversal_z'].fillna(0)*0.10 + df['m_cross'].fillna(0)*0.05 +
+    # 动量 20%: 价格+风险调整+盈利
+    df['m_price_z'].fillna(0)*0.10 + df['m_risk_adj_z'].fillna(0)*0.05 + df['m_earn_z'].fillna(0)*0.05 +
+    # 另类 5%: 分析师+公告
+    df['a_buy_z'].fillna(0)*0.02 + df['a_eps_z'].fillna(0)*0.02 + df['a_announce_z'].fillna(0)*0.01 +
+    # 其他 5%
     df['strategic'].fillna(0)*0.05
 )
 # ── 因子覆盖报告 ──
@@ -207,10 +232,11 @@ print(f"EPS增速覆盖: {df['a_eps'].notna().sum()} 只")
 print(f"机构调研覆盖: {(df['a_visit']>0).sum()} 只")
 print(f"战略行业覆盖: {(df['strategic']>0).sum()} 只")
 print(f"\n因子权重:")
-print(f"  基本面 40%: ROE(20%) + 杠杆(10%) + F-Score(10%)")
-print(f"  价量   30%: E/P(8%) + B/P(5%) + Size(4%) + 反转(8%) + 动量(5%)")
-print(f"  另类   20%: 分析师买入(5%) + EPS增速(5%) + 公告(5%) + 机构调研(5%)")
-print(f"  其他   10%: 战略行业(5%) + 行业中性化(5%)")
+print(f"  基本面 40%: ROE(15%) + 杠杆(10%) + F-Score(15%)")
+print(f"  价量   30%: E/P(8%) + B/P(4%) + Size(3%) + 反转(10%) + 截面动量(5%)")
+print(f"  动量   20%: 价格动量(10%) + 风险调整(5%) + 盈利动量(5%)")
+print(f"  另类    5%: 分析师(4%) + 公告(1%)")
+print(f"  其他    5%: 战略行业(5%)")
 print(f"{'='*55}\n")
 
 # 写入文件
@@ -266,7 +292,10 @@ for _, r in df.iterrows():
         "factors": {
             "value_ep": round(float(r.get("v_ep", 0) or 0), 4),
             "value_bp": round(float(r.get("v_bp", 0) or 0), 4),
-            "momentum_12m1m": round(float(r.get("momentum", 0) or 0), 4),
+            "momentum_price": round(float(r.get("m_price", 0) or 0), 4),
+            "momentum_risk_adj": round(float(r.get("m_risk_adj", 0) or 0), 4),
+            "momentum_cross": round(float(r.get("m_cross", 0) or 0), 2),
+            "momentum_earn": round(float(r.get("m_earn", 0) or 0), 4),
             "reversal_1m": round(float(r.get("reversal", 0) or 0), 4),
             "quality_roe": round(float(r.get("q_roe", 0) or 0), 4),
             "quality_leverage": round(float(r.get("q_leverage", 0) or 0), 4),
