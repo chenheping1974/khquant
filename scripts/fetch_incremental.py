@@ -25,7 +25,9 @@ for f in a_stock_dir.rglob("data.parquet"):
         existing.update(df["symbol"].unique().tolist())
     except: pass
 
-# 快速检查: 当月分区最近日期, 如果已是今天则跳过
+# 快速检查: 当月分区最近日期, 如果已是今天(北京时间)则跳过
+from datetime import timezone, timedelta as td
+beijing_now = date.today() + td(hours=8) if date.today() else date.today()
 now = pd.Timestamp.now()
 latest_partition = a_stock_dir / f"year={now.year}" / f"month={now.month}" / "data.parquet"
 need_fetch = True
@@ -33,7 +35,7 @@ if latest_partition.exists():
     try:
         df = pd.read_parquet(latest_partition, columns=["trade_date"])
         max_date = pd.to_datetime(df["trade_date"].max()).date()
-        if max_date >= date.today():
+        if max_date >= date.today():  # 日期比较, 与UTC无关
             logger.info(f"数据已是最新 ({max_date}), 跳过")
             need_fetch = False
     except: pass
