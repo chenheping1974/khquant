@@ -34,8 +34,18 @@ if not todo:
     logger.info('✅ 全部完成!')
     sys.exit(0)
 
-bs.login(); t0=time.time()
+bs.login()
+import socket
+socket.setdefaulttimeout(10)  # 10秒超时
+t0=time.time()
 for i,code in enumerate(todo):
+    # 每200只重新登录
+    if i>0 and i%200==0:
+        try: bs.logout()
+        except: pass
+        time.sleep(2)
+        bs.login()
+        logger.info(f'  重登录 [{i+1}/{len(todo)}]')
     cs=str(code).zfill(6);pf='sh' if cs.startswith('6') else 'sz';fc=f'{pf}.{cs}'
     # 利润表 Q1
     try:
