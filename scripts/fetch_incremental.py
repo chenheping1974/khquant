@@ -25,20 +25,25 @@ for f in a_stock_dir.rglob("data.parquet"):
         existing.update(df["symbol"].unique().tolist())
     except: pass
 
-# 检查当前月份分区, 找出已有今日数据的股票 (跳过重新拉取)
-today_str = pd.Timestamp.now().strftime("%Y-%m-%d")
-today_set = set()
+# 快速检查: 当月分区最近日期, 如果已是今天则跳过
 now = pd.Timestamp.now()
-cur_partition = a_stock_dir / f"year={now.year}" / f"month={now.month}" / "data.parquet"
-if cur_partition.exists():
+latest_partition = a_stock_dir / f"year={now.year}" / f"month={now.month}" / "data.parquet"
+need_fetch = True
+if latest_partition.exists():
     try:
-        df = pd.read_parquet(cur_partition, columns=["trade_date", "symbol"])
-        today_set = set(df[df["trade_date"].astype(str) == today_str]["symbol"].unique())
+        df = pd.read_parquet(latest_partition, columns=["trade_date"])
+        max_date = pd.to_datetime(df["trade_date"].max()).date()
+        if max_date >= date.today():
+            logger.info(f"数据已是最新 ({max_date}), 跳过")
+            need_fetch = False
     except: pass
 
-symbols = [s for s in sorted(existing) if s not in today_set]
-if STOCKS > 0: symbols = symbols[:STOCKS]
-logger.info(f"数据仓库 {len(existing)} 只, 已有今日 {len(today_set)} 只, 待拉 {len(symbols)} 只")
+if need_fetch:
+    symbols = sorted(existing)
+    if STOCKS > 0: symbols = symbols[:STOCKS]
+    logger.info(f"数据仓库 {len(existing)} 只, 拉取 {len(symbols)} 只增量")
+else:
+    symbols = []
 
 from src.data.storage import write_daily_bars
 
