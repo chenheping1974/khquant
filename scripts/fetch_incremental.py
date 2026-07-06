@@ -6,7 +6,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pandas as pd
 import requests
-from datetime import date
+from datetime import date, timedelta
 from config import DATA_DIR
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -26,17 +26,22 @@ for f in a_stock_dir.rglob("data.parquet"):
         existing.update(df["symbol"].unique().tolist())
     except: pass
 
-# 抽查10只: 最近3天(覆盖周末)有数据则跳过
+# 抽查10只: 最近交易日有数据则跳过
+# 周一→上周五, 周二至五→昨天
+today = date.today()
+if today.weekday() == 0:  # 周一
+    target = str(today - timedelta(days=3))  # 上周五
+else:
+    target = str(today - timedelta(days=1))  # 昨天
 now = pd.Timestamp.now()
 latest_partition = a_stock_dir / f"year={now.year}" / f"month={now.month}" / "data.parquet"
 need_fetch = True
 if latest_partition.exists():
     try:
         df = pd.read_parquet(latest_partition)
-        dates = pd.to_datetime(df["trade_date"].unique())
-        recent = dates[dates >= pd.Timestamp.now() - pd.Timedelta(days=3)]
-        if len(recent) > 0:
-            logger.info(f"最近交易日: {recent.max().date()}, 跳过")
+        sample = df[df["symbol"].isin(df["symbol"].unique()[:10])]
+        if (sample["trade_date"].astype(str) == target).any():
+            logger.info(f"抽查已有{target}数据, 跳过")
             need_fetch = False
     except: pass
 
