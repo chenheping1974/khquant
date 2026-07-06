@@ -73,7 +73,8 @@ for sym in syms[:N_PE]:  # 全量PE覆盖的股票
     pb=float(sv['pb'].iloc[0]) if not sv.empty and not pd.isna(sv['pb'].iloc[0]) else np.nan
     v_ep=1.0/pe if pe and pe>0 else np.nan
     v_bp=1.0/pb if pb and pb>0 else np.nan
-    v_cfp=np.nan
+    mktcap=float(sv['market_cap'].iloc[0]) if not sv.empty and not pd.isna(sv.get('market_cap',pd.Series([np.nan])).iloc[0]) else np.nan
+    v_size=-np.log(mktcap) if mktcap and mktcap>0 else np.nan  # 小盘溢价
 
     # Momentum
     mom=np.nan
@@ -111,7 +112,7 @@ for sym in syms[:N_PE]:  # 全量PE覆盖的股票
     tier_score=float(tiers.get(str(ind_code),0) if isinstance(tiers.get(str(ind_code),0),(int,float)) else (1.0 if tiers.get(str(ind_code))==1 else 0.5 if tiers.get(str(ind_code))==2 else 0))
 
     results.append({
-        'symbol':sym,'v_ep':v_ep,'v_bp':v_bp,'momentum':mom,'reversal':rev,
+        'symbol':sym,'v_ep':v_ep,'v_bp':v_bp,'v_size':v_size,'momentum':mom,'reversal':rev,
         'q_roe':q_roe,'q_leverage':q_leverage,'q_fscore':q_fscore,
         'a_visit':a_visit,'strategic':tier_score,
         'industry':ind_names.get(str(ind_code),f'行业{ind_code}')
@@ -119,7 +120,7 @@ for sym in syms[:N_PE]:  # 全量PE覆盖的股票
 
 df=pd.DataFrame(results)
 # Z-score标准化各因子
-factor_cols = ['v_ep','v_bp','momentum','reversal','q_roe','q_leverage','q_fscore']
+factor_cols = ['v_ep','v_bp','v_size','momentum','reversal','q_roe','q_leverage','q_fscore']
 for col in factor_cols:
     if col in df.columns and df[col].notna().any():
         mu,sigma = df[col].mean(), df[col].std()
@@ -130,7 +131,7 @@ for col in factor_cols:
 # 加权总分 (BlackRock: 基本面40% + 价量30% + 另类15% + 其他15%)
 df['composite'] = (
     df['q_roe_z'].fillna(0)*0.20 + df['q_leverage_z'].fillna(0)*0.10 + df['q_fscore_z'].fillna(0)*0.10 +
-    df['v_ep_z'].fillna(0)*0.10 + df['v_bp_z'].fillna(0)*0.10 +
+    df['v_ep_z'].fillna(0)*0.10 + df['v_bp_z'].fillna(0)*0.05 + df['v_size_z'].fillna(0)*0.05 +
     df['momentum_z'].fillna(0)*0.15 + df['reversal_z'].fillna(0)*0.15 +
     df['strategic'].fillna(0)*0.05 + df['a_visit'].apply(lambda x: min(x,50)/50*0.05)
 )
