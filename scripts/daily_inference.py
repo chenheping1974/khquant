@@ -79,10 +79,9 @@ print(f"机构调研覆盖: {(df['a_visit']>0).sum()} 只")
 print(f"战略行业覆盖: {(df['strategic']>0).sum()} 只")
 print(f"\n因子权重:")
 print(f"  基本面 40%: ROE(20%) + 杠杆(10%) + F-Score(10%)")
-print(f"  价量   30%: E/P(10%) + B/P(5%) + Size(5%) + 反转(10%)")
+print(f"  价量   30%: E/P(8%) + B/P(5%) + Size(4%) + 反转(8%) + 动量(5%)")
 print(f"  另类   20%: 分析师买入(5%) + EPS增速(5%) + 公告(5%) + 机构调研(5%)")
 print(f"  其他   10%: 战略行业(5%) + 行业中性化(5%)")
-print(f"  价格动量: 15% (替代E/P分位数)")
 print(f"{'='*55}\n")
 
 # 写入文件
@@ -163,13 +162,23 @@ for sym in syms[:N_PE]:  # 全量PE覆盖的股票
     ind_code=ind_map.get(str(sym),-1)
     tier_score=float(tiers.get(str(ind_code),0) if isinstance(tiers.get(str(ind_code),0),(int,float)) else (1.0 if tiers.get(str(ind_code))==1 else 0.5 if tiers.get(str(ind_code))==2 else 0))
 
+    # 公告情绪: 近90天公告得分
+    a_announce = 0
+    ann = safe_read('.cache_announce.parquet')
+    if not ann.empty and 'symbol' in ann.columns:
+        sym_ann = ann[ann['symbol']==sym]
+        if not sym_ann.empty and 'pub_date' in sym_ann.columns:
+            sym_ann['pub_date'] = pd.to_datetime(sym_ann['pub_date'])
+            recent = sym_ann[sym_ann['pub_date'] >= pd.Timestamp.now()-pd.Timedelta(days=90)]
+            a_announce = recent['score'].sum() if not recent.empty else 0
+
     # Analyst
     a_buy, a_eps = analyst_map.get(sym, (np.nan, np.nan))
 
     results.append({
         'symbol':sym,'v_ep':v_ep,'v_bp':v_bp,'v_size':v_size,'mktcap_raw':mktcap,'momentum':mom,'reversal':rev,
         'q_roe':q_roe,'q_leverage':q_leverage,'q_fscore':q_fscore,
-        'a_visit':a_visit,'a_buy':a_buy,'a_eps':a_eps,'strategic':tier_score,
+        'a_visit':a_visit,'a_buy':a_buy,'a_eps':a_eps,'a_announce':a_announce,'strategic':tier_score,
         'industry':ind_names.get(str(ind_code),f'行业{ind_code}')
     })
 
@@ -183,7 +192,7 @@ if 'mktcap_raw' in df.columns:
     print(f"  市值过滤: {len(df)}/{n_before} 只 (剔除最小30%)")
 
 # Z-score标准化各因子
-factor_cols = ['v_ep','v_bp','v_size','momentum','reversal','q_roe','q_leverage','q_fscore','a_buy','a_eps']
+factor_cols = ['v_ep','v_bp','v_size','momentum','reversal','q_roe','q_leverage','q_fscore','a_buy','a_eps','a_announce']
 for col in factor_cols:
     if col in df.columns and df[col].notna().any():
         mu,sigma = df[col].mean(), df[col].std()
@@ -194,9 +203,10 @@ for col in factor_cols:
 # 加权总分 (BlackRock: 基本面40% + 价量30% + 另类15% + 其他15%)
 df['composite'] = (
     df['q_roe_z'].fillna(0)*0.20 + df['q_leverage_z'].fillna(0)*0.10 + df['q_fscore_z'].fillna(0)*0.10 +
-    df['v_ep_z'].fillna(0)*0.10 + df['v_bp_z'].fillna(0)*0.05 + df['v_size_z'].fillna(0)*0.05 +
-    df['momentum_z'].fillna(0)*0.15 + df['reversal_z'].fillna(0)*0.15 +
+    df['v_ep_z'].fillna(0)*0.08 + df['v_bp_z'].fillna(0)*0.05 + df['v_size_z'].fillna(0)*0.04 +
+    df['momentum_z'].fillna(0)*0.05 + df['reversal_z'].fillna(0)*0.08 +
     df['a_buy_z'].fillna(0)*0.05 + df['a_eps_z'].fillna(0)*0.05 +
+    df['a_announce_z'].fillna(0)*0.05 + df['a_visit'].apply(lambda x: min(x,30)/30*0.05) +
     df['strategic'].fillna(0)*0.05
 )
 
