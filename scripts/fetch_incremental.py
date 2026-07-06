@@ -26,17 +26,17 @@ for f in a_stock_dir.rglob("data.parquet"):
         existing.update(df["symbol"].unique().tolist())
     except: pass
 
-# 检查当月分区: 如果最近数据在3天内, 跳过 (覆盖周末)
-today = date.today()
+# 抽查10只: 如果已有今天数据, 全部跳过
+today_str = str(date.today())
 now = pd.Timestamp.now()
 latest_partition = a_stock_dir / f"year={now.year}" / f"month={now.month}" / "data.parquet"
 need_fetch = True
 if latest_partition.exists():
     try:
-        df = pd.read_parquet(latest_partition, columns=["trade_date"])
-        max_date = pd.to_datetime(df["trade_date"].max()).date()
-        if (today - max_date).days <= 3:
-            logger.info(f"数据已是最新 ({max_date}), 跳过")
+        df = pd.read_parquet(latest_partition)
+        sample = df[df["symbol"].isin(df["symbol"].unique()[:10])]
+        if (sample["trade_date"].astype(str) == today_str).any():
+            logger.info(f"抽查已有今日数据, 跳过全量拉取")
             need_fetch = False
     except: pass
 
