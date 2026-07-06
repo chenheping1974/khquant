@@ -26,18 +26,24 @@ for f in a_stock_dir.rglob("data.parquet"):
         existing.update(df["symbol"].unique().tolist())
     except: pass
 
-# 快速检查: 当月分区最近日期, 如果已是今天则跳过
-now = pd.Timestamp.now()
-latest_partition = a_stock_dir / f"year={now.year}" / f"month={now.month}" / "data.parquet"
-need_fetch = True
-if latest_partition.exists():
-    try:
-        df = pd.read_parquet(latest_partition, columns=["trade_date"])
-        max_date = pd.to_datetime(df["trade_date"].max()).date()
-        if max_date >= date.today():  # 日期比较, 与UTC无关
-            logger.info(f"数据已是最新 ({max_date}), 跳过")
-            need_fetch = False
-    except: pass
+# 周末/节假日跳过 (Sina API不返回数据)
+today = date.today()
+if today.weekday() >= 5:  # 周六=5, 周日=6
+    logger.info(f"周末 ({today}), 跳过数据拉取")
+    need_fetch = False
+else:
+    # 检查当月分区: 如果最近数据在2天内, 跳过
+    now = pd.Timestamp.now()
+    latest_partition = a_stock_dir / f"year={now.year}" / f"month={now.month}" / "data.parquet"
+    need_fetch = True
+    if latest_partition.exists():
+        try:
+            df = pd.read_parquet(latest_partition, columns=["trade_date"])
+            max_date = pd.to_datetime(df["trade_date"].max()).date()
+            if (today - max_date).days <= 1:  # 1天内的数据视为最新
+                logger.info(f"数据已是最新 ({max_date}), 跳过")
+                need_fetch = False
+        except: pass
 
 if need_fetch:
     symbols = sorted(existing)
