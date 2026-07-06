@@ -58,8 +58,20 @@ import os; os.makedirs("results", exist_ok=True)
 out_path = f"results/signals-{latest_date.date()}.txt"
 fout = open(out_path, "w")
 
-print(f"日期: {latest_date.date()}\n")
-fout.write(f"khquant v3.0 选股信号 — {latest_date.date()}\n{'='*55}\n\n")
+# ── 数据新鲜度 ──
+import os, datetime as dt
+fresh = []
+for path,name,max_d in [('.cache_fin_infer.parquet','财报',120),('.cache_holder_all.parquet','股东户数',90),
+    ('.cache_announce.parquet','公告',60),('.cache_analyst_fc.parquet','分析师',30)]:
+    if os.path.exists(path):
+        m=dt.datetime.fromtimestamp(os.path.getmtime(path)); age=(dt.datetime.now()-m).days
+        fresh.append(f'  {"✅" if age<=max_d else "⚠️过期"} {name}: {age}天前 (>{max_d}天警告)')
+    else: fresh.append(f'  ❌ {name}: 缺失')
+print(f"日期: {latest_date.date()}\n数据新鲜度:")
+for f in fresh: print(f)
+fout.write(f"khquant v3.0 选股信号 — {latest_date.date()}\n数据新鲜度:\n")
+for f in fresh: fout.write(f+"\n")
+fout.write(f"{'='*55}\n\n")
 
 # ── 因子覆盖报告 ──
 print(f"\n{'='*55}")
