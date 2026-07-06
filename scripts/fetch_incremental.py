@@ -26,24 +26,24 @@ for f in a_stock_dir.rglob("data.parquet"):
         existing.update(df["symbol"].unique().tolist())
     except: pass
 
-# 抽查10只: 最近交易日有数据则跳过
-# 周一→上周五, 周二至五→昨天
+# 抽查10只: 有今天数据则跳过, 周末直接跳
 today = date.today()
-if today.weekday() == 0:  # 周一
-    target = str(today - timedelta(days=3))  # 上周五
+if today.weekday() >= 5:  # 周六日休市
+    logger.info(f"周末休市, 跳过数据拉取")
+    need_fetch = False
 else:
-    target = str(today - timedelta(days=1))  # 昨天
-now = pd.Timestamp.now()
-latest_partition = a_stock_dir / f"year={now.year}" / f"month={now.month}" / "data.parquet"
-need_fetch = True
-if latest_partition.exists():
-    try:
-        df = pd.read_parquet(latest_partition)
-        sample = df[df["symbol"].isin(df["symbol"].unique()[:10])]
-        if (sample["trade_date"].astype(str) == target).any():
-            logger.info(f"抽查已有{target}数据, 跳过")
-            need_fetch = False
-    except: pass
+    target = str(today)
+    now = pd.Timestamp.now()
+    latest_partition = a_stock_dir / f"year={now.year}" / f"month={now.month}" / "data.parquet"
+    need_fetch = True
+    if latest_partition.exists():
+        try:
+            df = pd.read_parquet(latest_partition)
+            sample = df[df["symbol"].isin(df["symbol"].unique()[:10])]
+            if (sample["trade_date"].astype(str) == target).any():
+                logger.info(f"抽查已有今日数据({target}), 跳过")
+                need_fetch = False
+        except: pass
 
 if need_fetch:
     symbols = sorted(existing)
