@@ -26,8 +26,8 @@ raw=read_daily_bars(A_STOCK_DIR,start_date=start,end_date=end,market='a_stock')
 syms=sorted(raw['symbol'].unique())
 raw=raw[raw['symbol'].isin(syms)].copy(); raw['trade_date']=pd.to_datetime(raw['trade_date'])
 
-# PE: 尽可能多拉 (腾讯单次50只, 500只≈10秒)
-N_PE = min(1000, len(syms))
+# PE: 全量拉取 (腾讯单次50只, 5000只≈100秒)
+N_PE = len(syms)
 val=fetch_valuation_batch(symbols=syms[:N_PE])
 if val is not None and not val.empty and 'trade_date' in val.columns:
     val['trade_date']=pd.to_datetime(val['trade_date'])
