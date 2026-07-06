@@ -115,18 +115,16 @@ for sym in syms[:N_PE]:  # 全量PE覆盖的股票
     rev=np.nan
     if n>=21: rev=-(c[-1]/c[-22]-1)
 
-    # Quality
+    # Quality (推理用最新财报,不比对日期)
     q_roe=q_leverage=q_fscore=np.nan
-    sf=fin[fin['symbol']==sym].sort_values('pubDate')
+    sf=fin[fin['symbol']==sym]
     if not sf.empty:
-        prev=sf[sf['pubDate']<=latest_date]
-        if not prev.empty:
-            r=prev.iloc[-1]
-            q_roe=r.get('roe',np.nan)
-            q_leverage=-(r.get('debt_ratio',np.nan)) if not pd.isna(r.get('debt_ratio')) else np.nan
-            # F-Score simplified
-            f=0
-            if not pd.isna(r.get('roe')) and r['roe']>0: f+=1
+        r=sf.iloc[-1]  # 取最新一行
+        q_roe=r.get('roe',np.nan)
+        q_leverage=-(r.get('debt_ratio',np.nan)) if not pd.isna(r.get('debt_ratio')) else np.nan
+        # F-Score simplified
+        f=0
+        if not pd.isna(r.get('roe')) and r['roe']>0: f+=1
             if not pd.isna(r.get('CFOtoNP')) and r['CFOtoNP']>0: f+=1
             if not pd.isna(r.get('CFOtoNP')) and r['CFOtoNP']>1: f+=1
             q_fscore=f/3.0 if f>0 else np.nan
