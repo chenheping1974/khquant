@@ -17,14 +17,24 @@ HEADERS = {"User-Agent": "Mozilla/5.0", "Referer": "https://finance.sina.com.cn/
 STOCKS = 0  # 0=全部
 DATALEN = 5   # 最近5天 (增量)
 
-# 取股票列表 (从数据仓库已有数据)
+# 取股票列表 (只读当前月分区, 秒级)
 a_stock_dir = DATA_DIR / "a_stock"
 existing = set()
-for f in a_stock_dir.rglob("data.parquet"):
+now = pd.Timestamp.now()
+cur = a_stock_dir / f"year={now.year}" / f"month={now.month}" / "data.parquet"
+if cur.exists():
     try:
-        df = pd.read_parquet(f, columns=["symbol"])
-        existing.update(df["symbol"].unique().tolist())
+        df = pd.read_parquet(cur, columns=["symbol"])
+        existing = set(df["symbol"].unique().tolist())
     except: pass
+# 兜底: 找最近的分区
+if not existing:
+    for p in sorted(a_stock_dir.glob("year=*/month=*/data.parquet"), reverse=True):
+        try:
+            df = pd.read_parquet(p, columns=["symbol"])
+            existing = set(df["symbol"].unique().tolist())
+            break
+        except: pass
 
 # 抽查10只: 有今天数据则跳过, 周末直接跳
 today = date.today()
