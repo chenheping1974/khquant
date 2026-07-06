@@ -251,7 +251,8 @@ import json
 json_data = {
     "date": str(latest_date.date()),
     "updated": str(pd.Timestamp.now()),
-    "method": "BlackRock 4/3/2/1, 200 stocks",
+    "method": "BlackRock 4/3/2/1",
+    "data_freshness": {f.split(':')[0].strip().lstrip('✅⚠️❌ '): f.strip() for f in fresh},
     "top30": []
 }
 for _, r in df.iterrows():
