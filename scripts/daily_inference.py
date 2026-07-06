@@ -163,13 +163,13 @@ for sym in syms[:N_PE]:  # 全量PE覆盖的股票
     })
 
 df=pd.DataFrame(results)
-# 剔除市值最小30% (LSY 2019: 壳价值污染)
-# mktcap列记录原始市值, 未Z-score
-if 'mktcap_raw' in df.columns:
+# LSY 2019: 市值最小30%的Size因子设为0 (壳污染, 不参与小盘排序)
+# 但股票保留在池中, 其他因子仍可得分
+if 'mktcap_raw' in df.columns and 'v_size' in df.columns:
     cap_cutoff = df['mktcap_raw'].quantile(0.30)
-    n_before = len(df)
-    df = df[df['mktcap_raw'] >= cap_cutoff]
-    print(f"  市值过滤: {len(df)}/{n_before} 只 (剔除最小30%)")
+    n_small = (df['mktcap_raw'] < cap_cutoff).sum()
+    df.loc[df['mktcap_raw'] < cap_cutoff, 'v_size'] = 0
+    print(f"  Size过滤: {n_small}/{len(df)} 只设为0 (最小30%市值)")
 
 # Z-score标准化各因子
 factor_cols = ['v_ep','v_bp','v_size','momentum','reversal','q_roe','q_leverage','q_fscore','a_buy','a_eps','a_announce']
