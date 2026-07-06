@@ -73,38 +73,6 @@ fout.write(f"khquant v3.0 选股信号 — {latest_date.date()}\n数据新鲜度
 for f in fresh: fout.write(f+"\n")
 fout.write(f"{'='*55}\n\n")
 
-# ── 因子覆盖报告 ──
-print(f"\n{'='*55}")
-print(f"因子覆盖报告")
-print(f"{'='*55}")
-print(f"股票池: {len(df)} 只 (剔除最小30%市值后)")
-print(f"PE覆盖: {df['v_ep'].notna().sum()} 只")
-print(f"PB覆盖: {df['v_bp'].notna().sum()} 只")
-print(f"动量覆盖: {df['momentum'].notna().sum()} 只")
-print(f"反转覆盖: {df['reversal'].notna().sum()} 只")
-print(f"ROE覆盖: {df['q_roe'].notna().sum()} 只")
-print(f"杠杆覆盖: {df['q_leverage'].notna().sum()} 只")
-print(f"F-Score覆盖: {df['q_fscore'].notna().sum()} 只")
-print(f"分析师买入覆盖: {df['a_buy'].notna().sum()} 只")
-print(f"EPS增速覆盖: {df['a_eps'].notna().sum()} 只")
-print(f"机构调研覆盖: {(df['a_visit']>0).sum()} 只")
-print(f"战略行业覆盖: {(df['strategic']>0).sum()} 只")
-print(f"\n因子权重:")
-print(f"  基本面 40%: ROE(20%) + 杠杆(10%) + F-Score(10%)")
-print(f"  价量   30%: E/P(8%) + B/P(5%) + Size(4%) + 反转(8%) + 动量(5%)")
-print(f"  另类   20%: 分析师买入(5%) + EPS增速(5%) + 公告(5%) + 机构调研(5%)")
-print(f"  其他   10%: 战略行业(5%) + 行业中性化(5%)")
-print(f"{'='*55}\n")
-
-# 写入文件
-fout.write(f"\n{'='*55}\n因子覆盖报告\n{'='*55}\n")
-fout.write(f"股票池: {len(df)} 只\n")
-for name, col in [('PE','v_ep'),('PB','v_bp'),('动量','momentum'),('反转','reversal'),
-    ('ROE','q_roe'),('杠杆','q_leverage'),('F-Score','q_fscore'),
-    ('分析师买入','a_buy'),('EPS增速','a_eps'),('机构调研','a_visit'),('战略行业','strategic')]:
-    n = df[col].notna().sum() if col != 'a_visit' else (df['a_visit']>0).sum()
-    fout.write(f"  {name}: {n}/{len(df)}\n")
-fout.write(f"{'='*55}\n\n")
 
 # ── 分析师数据 (akshare实时拉) ──
 analyst_map = {}
@@ -221,6 +189,38 @@ df['composite'] = (
     df['a_announce_z'].fillna(0)*0.05 + df['a_visit'].apply(lambda x: min(x,30)/30*0.05) +
     df['strategic'].fillna(0)*0.05
 )
+# ── 因子覆盖报告 ──
+print(f"\n{'='*55}")
+print(f"因子覆盖报告")
+print(f"{'='*55}")
+print(f"股票池: {len(df)} 只 (剔除最小30%市值后)")
+print(f"PE覆盖: {df['v_ep'].notna().sum()} 只")
+print(f"PB覆盖: {df['v_bp'].notna().sum()} 只")
+print(f"动量覆盖: {df['momentum'].notna().sum()} 只")
+print(f"反转覆盖: {df['reversal'].notna().sum()} 只")
+print(f"ROE覆盖: {df['q_roe'].notna().sum()} 只")
+print(f"杠杆覆盖: {df['q_leverage'].notna().sum()} 只")
+print(f"F-Score覆盖: {df['q_fscore'].notna().sum()} 只")
+print(f"分析师买入覆盖: {df['a_buy'].notna().sum()} 只")
+print(f"EPS增速覆盖: {df['a_eps'].notna().sum()} 只")
+print(f"机构调研覆盖: {(df['a_visit']>0).sum()} 只")
+print(f"战略行业覆盖: {(df['strategic']>0).sum()} 只")
+print(f"\n因子权重:")
+print(f"  基本面 40%: ROE(20%) + 杠杆(10%) + F-Score(10%)")
+print(f"  价量   30%: E/P(8%) + B/P(5%) + Size(4%) + 反转(8%) + 动量(5%)")
+print(f"  另类   20%: 分析师买入(5%) + EPS增速(5%) + 公告(5%) + 机构调研(5%)")
+print(f"  其他   10%: 战略行业(5%) + 行业中性化(5%)")
+print(f"{'='*55}\n")
+
+# 写入文件
+fout.write(f"\n{'='*55}\n因子覆盖报告\n{'='*55}\n")
+fout.write(f"股票池: {len(df)} 只\n")
+for name, col in [('PE','v_ep'),('PB','v_bp'),('动量','momentum'),('反转','reversal'),
+    ('ROE','q_roe'),('杠杆','q_leverage'),('F-Score','q_fscore'),
+    ('分析师买入','a_buy'),('EPS增速','a_eps'),('机构调研','a_visit'),('战略行业','strategic')]:
+    n = df[col].notna().sum() if col != 'a_visit' else (df['a_visit']>0).sum()
+    fout.write(f"  {name}: {n}/{len(df)}\n")
+fout.write(f"{'='*55}\n\n")
 
 df=df.dropna(subset=['composite']).sort_values('composite',ascending=False).head(30)
 
