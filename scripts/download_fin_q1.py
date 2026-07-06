@@ -41,8 +41,10 @@ for i,code in enumerate(todo):
                 'netProfit':float(r.get('净利润(元)',np.nan)) if r.get('净利润(元)') else np.nan,
                 'debt_ratio':float(r.get('资产负债率(%)',np.nan))/100 if r.get('资产负债率(%)') else np.nan,
                 'CFOtoNP':float(r.get('经营现金净流量与净利润的比率(%)',np.nan))/100 if r.get('经营现金净流量与净利润的比率(%)') else np.nan,
+                'eps':float(r.get('摊薄每股收益(元)',np.nan)) if r.get('摊薄每股收益(元)') else np.nan,
             })
     except: pass
+    time.sleep(1.2)  # 反爬保护
     if (i+1)%200==0:
         pd.DataFrame(rows).to_parquet(cf)
         logger.info(f'[{i+1}/{len(todo)}] {len(rows)}只 {(time.time()-t0)/60:.0f}min')

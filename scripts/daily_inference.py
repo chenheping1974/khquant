@@ -222,7 +222,9 @@ print(f"{'='*55}")
 print(f"股票池: {len(df)} 只 (剔除最小30%市值后)")
 print(f"PE覆盖: {df['v_ep'].notna().sum()} 只")
 print(f"PB覆盖: {df['v_bp'].notna().sum()} 只")
-print(f"动量覆盖: {df['momentum'].notna().sum()} 只")
+print(f"价格动量覆盖: {df['m_price'].notna().sum()} 只")
+print(f"风险调整覆盖: {df['m_risk_adj'].notna().sum()} 只")
+print(f"截面动量覆盖: {df['m_cross'].notna().sum()} 只")
 print(f"反转覆盖: {df['reversal'].notna().sum()} 只")
 print(f"ROE覆盖: {df['q_roe'].notna().sum()} 只")
 print(f"杠杆覆盖: {df['q_leverage'].notna().sum()} 只")
@@ -242,7 +244,7 @@ print(f"{'='*55}\n")
 # 写入文件
 fout.write(f"\n{'='*55}\n因子覆盖报告\n{'='*55}\n")
 fout.write(f"股票池: {len(df)} 只\n")
-for name, col in [('PE','v_ep'),('PB','v_bp'),('动量','momentum'),('反转','reversal'),
+for name, col in [('PE','v_ep'),('PB','v_bp'),('价格动量','m_price'),('反转','reversal'),
     ('ROE','q_roe'),('杠杆','q_leverage'),('F-Score','q_fscore'),
     ('分析师买入','a_buy'),('EPS增速','a_eps'),('机构调研','a_visit'),('战略行业','strategic')]:
     n = df[col].notna().sum() if col != 'a_visit' else (df['a_visit']>0).sum()
