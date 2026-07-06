@@ -1,6 +1,6 @@
 {
   "date": "2026-07-03",
-  "updated": "2026-07-06 12:48:25.328288",
+  "updated": "2026-07-06 13:39:36.340662",
   "method": "BlackRock 4/3/2/1",
   "data_freshness": {
     "财报": "✅ 财报: 0天前 (>120天警告)",
@@ -11,49 +11,157 @@
   "top30": [
     {
       "rank": 1,
-      "symbol": "001309",
-      "name": "德明利",
-      "industry": "半导体",
-      "score": 0.931,
+      "symbol": "002582",
+      "name": "好想你",
+      "industry": "食品饮料",
+      "score": 2.203,
       "factors": {
-        "value_ep": 0.0197,
-        "value_bp": 0.0319,
-        "momentum_12m1m": 4.4797,
-        "reversal_1m": -0.4248,
-        "quality_roe": 0.6765,
-        "quality_leverage": -0.6397,
-        "quality_fscore": 0.33,
-        "alt_visits": 8,
-        "strategic_tier": 1
-      }
-    },
-    {
-      "rank": 2,
-      "symbol": "000807",
-      "name": "云铝股份",
-      "industry": "有色金属",
-      "score": 0.728,
-      "factors": {
-        "value_ep": 0.1103,
-        "value_bp": 0.4367,
-        "momentum_12m1m": 0.8791,
-        "reversal_1m": 0.2647,
-        "quality_roe": 0.1064,
-        "quality_leverage": -0.1774,
-        "quality_fscore": 0.67,
+        "value_ep": 0.4785,
+        "value_bp": 1.1905,
+        "momentum_12m1m": -0.0031,
+        "reversal_1m": 0.0976,
+        "quality_roe": 0.244,
+        "quality_leverage": -0.3198,
+        "quality_fscore": 0.83,
         "alt_visits": 4,
         "strategic_tier": 3
       }
     },
     {
+      "rank": 2,
+      "symbol": "001309",
+      "name": "德明利",
+      "industry": "半导体",
+      "score": 1.599,
+      "factors": {
+        "value_ep": 0.0195,
+        "value_bp": 0.0315,
+        "momentum_12m1m": 4.4797,
+        "reversal_1m": -0.4248,
+        "quality_roe": 0.6765,
+        "quality_leverage": -0.6397,
+        "quality_fscore": 0.5,
+        "alt_visits": 8,
+        "strategic_tier": 1
+      }
+    },
+    {
       "rank": 3,
+      "symbol": "300308",
+      "name": "中际旭创",
+      "industry": "行业-1",
+      "score": 1.071,
+      "factors": {
+        "value_ep": 0.0121,
+        "value_bp": 0.028,
+        "momentum_12m1m": 8.8842,
+        "reversal_1m": 0.1247,
+        "quality_roe": 0.1611,
+        "quality_leverage": -0.3264,
+        "quality_fscore": 0.83,
+        "alt_visits": 8,
+        "strategic_tier": 0
+      }
+    },
+    {
+      "rank": 4,
+      "symbol": "600185",
+      "name": "珠免集团",
+      "industry": "行业-1",
+      "score": 0.956,
+      "factors": {
+        "value_ep": NaN,
+        "value_bp": 0.0102,
+        "momentum_12m1m": -0.1082,
+        "reversal_1m": 0.1309,
+        "quality_roe": 0.452,
+        "quality_leverage": -0.8213,
+        "quality_fscore": 0.67,
+        "alt_visits": 6,
+        "strategic_tier": 0
+      }
+    },
+    {
+      "rank": 5,
+      "symbol": "300502",
+      "name": "新易盛",
+      "industry": "行业-1",
+      "score": 0.942,
+      "factors": {
+        "value_ep": 0.0149,
+        "value_bp": 0.027,
+        "momentum_12m1m": 6.0534,
+        "reversal_1m": 0.3276,
+        "quality_roe": 0.1364,
+        "quality_leverage": -0.3104,
+        "quality_fscore": 0.83,
+        "alt_visits": 7,
+        "strategic_tier": 0
+      }
+    },
+    {
+      "rank": 6,
+      "symbol": "000807",
+      "name": "云铝股份",
+      "industry": "有色金属",
+      "score": 0.924,
+      "factors": {
+        "value_ep": 0.1092,
+        "value_bp": 0.431,
+        "momentum_12m1m": 0.8791,
+        "reversal_1m": 0.2647,
+        "quality_roe": 0.1064,
+        "quality_leverage": -0.1774,
+        "quality_fscore": 0.83,
+        "alt_visits": 4,
+        "strategic_tier": 3
+      }
+    },
+    {
+      "rank": 7,
+      "symbol": "000726",
+      "name": "鲁  泰Ａ",
+      "industry": "纺织服装",
+      "score": 0.867,
+      "factors": {
+        "value_ep": 0.1143,
+        "value_bp": 2.0408,
+        "momentum_12m1m": -0.0264,
+        "reversal_1m": 0.05,
+        "quality_roe": 0.0095,
+        "quality_leverage": -0.2736,
+        "quality_fscore": 1.0,
+        "alt_visits": 6,
+        "strategic_tier": 3
+      }
+    },
+    {
+      "rank": 8,
+      "symbol": "300394",
+      "name": "天孚通信",
+      "industry": "行业-1",
+      "score": 0.854,
+      "factors": {
+        "value_ep": 0.0083,
+        "value_bp": 0.021,
+        "momentum_12m1m": 5.4594,
+        "reversal_1m": 0.4972,
+        "quality_roe": 0.0823,
+        "quality_leverage": -0.1425,
+        "quality_fscore": 0.83,
+        "alt_visits": 7,
+        "strategic_tier": 0
+      }
+    },
+    {
+      "rank": 9,
       "symbol": "002379",
       "name": "宏桥控股",
       "industry": "有色金属",
-      "score": 0.727,
+      "score": 0.851,
       "factors": {
-        "value_ep": 0.0993,
-        "value_bp": 0.2469,
+        "value_ep": 0.0989,
+        "value_bp": 0.2463,
         "momentum_12m1m": 0.7514,
         "reversal_1m": 0.2772,
         "quality_roe": 0.1381,
@@ -64,14 +172,14 @@
       }
     },
     {
-      "rank": 4,
+      "rank": 10,
       "symbol": "000975",
       "name": "山金国际",
       "industry": "贵金属",
-      "score": 0.718,
+      "score": 0.848,
       "factors": {
-        "value_ep": 0.0647,
-        "value_bp": 0.2611,
+        "value_ep": 0.0649,
+        "value_bp": 0.2618,
         "momentum_12m1m": 0.1598,
         "reversal_1m": 0.1306,
         "quality_roe": 0.0895,
@@ -82,32 +190,50 @@
       }
     },
     {
-      "rank": 5,
-      "symbol": "002532",
-      "name": "天山铝业",
-      "industry": "有色金属",
-      "score": 0.705,
+      "rank": 11,
+      "symbol": "002215",
+      "name": "诺 普 信",
+      "industry": "农药兽药",
+      "score": 0.848,
       "factors": {
-        "value_ep": 0.1112,
-        "value_bp": 0.5618,
-        "momentum_12m1m": 0.7521,
-        "reversal_1m": 0.2726,
-        "quality_roe": 0.0729,
-        "quality_leverage": -0.3994,
-        "quality_fscore": 1.0,
-        "alt_visits": 5,
+        "value_ep": 0.0876,
+        "value_bp": 0.5155,
+        "momentum_12m1m": -0.1278,
+        "reversal_1m": 0.0485,
+        "quality_roe": 0.1665,
+        "quality_leverage": -0.5918,
+        "quality_fscore": 0.83,
+        "alt_visits": 7,
         "strategic_tier": 3
       }
     },
     {
-      "rank": 6,
+      "rank": 12,
+      "symbol": "300492",
+      "name": "华图山鼎",
+      "industry": "行业-1",
+      "score": 0.837,
+      "factors": {
+        "value_ep": 0.0334,
+        "value_bp": 0.0354,
+        "momentum_12m1m": -0.3718,
+        "reversal_1m": 0.1102,
+        "quality_roe": 0.4748,
+        "quality_leverage": -0.8769,
+        "quality_fscore": 0.5,
+        "alt_visits": 2,
+        "strategic_tier": 0
+      }
+    },
+    {
+      "rank": 13,
       "symbol": "000933",
       "name": "神火股份",
       "industry": "有色金属",
-      "score": 0.703,
+      "score": 0.831,
       "factors": {
-        "value_ep": 0.1117,
-        "value_bp": 0.5025,
+        "value_ep": 0.1112,
+        "value_bp": 0.5,
         "momentum_12m1m": 0.777,
         "reversal_1m": 0.2819,
         "quality_roe": 0.089,
@@ -118,230 +244,122 @@
       }
     },
     {
-      "rank": 7,
-      "symbol": "000600",
-      "name": "建投能源",
-      "industry": "电力行业",
-      "score": 0.666,
+      "rank": 14,
+      "symbol": "002532",
+      "name": "天山铝业",
+      "industry": "有色金属",
+      "score": 0.819,
       "factors": {
-        "value_ep": 0.1312,
-        "value_bp": 0.7812,
-        "momentum_12m1m": 0.7654,
-        "reversal_1m": 0.2763,
-        "quality_roe": 0.0455,
-        "quality_leverage": -0.5724,
+        "value_ep": 0.1106,
+        "value_bp": 0.5587,
+        "momentum_12m1m": 0.7521,
+        "reversal_1m": 0.2726,
+        "quality_roe": 0.0729,
+        "quality_leverage": -0.3994,
         "quality_fscore": 1.0,
-        "alt_visits": 9,
-        "strategic_tier": 2
-      }
-    },
-    {
-      "rank": 8,
-      "symbol": "002215",
-      "name": "诺 普 信",
-      "industry": "农药兽药",
-      "score": 0.664,
-      "factors": {
-        "value_ep": 0.0876,
-        "value_bp": 0.5181,
-        "momentum_12m1m": -0.1278,
-        "reversal_1m": 0.0485,
-        "quality_roe": 0.1665,
-        "quality_leverage": -0.5918,
-        "quality_fscore": 0.67,
-        "alt_visits": 7,
-        "strategic_tier": 3
-      }
-    },
-    {
-      "rank": 9,
-      "symbol": "000498",
-      "name": "山东路桥",
-      "industry": "工程建设",
-      "score": 0.658,
-      "factors": {
-        "value_ep": 0.2857,
-        "value_bp": 2.1739,
-        "momentum_12m1m": -0.117,
-        "reversal_1m": 0.0535,
-        "quality_roe": 0.0063,
-        "quality_leverage": -0.7602,
-        "quality_fscore": 0.33,
         "alt_visits": 5,
         "strategic_tier": 3
       }
     },
     {
-      "rank": 10,
-      "symbol": "000612",
-      "name": "焦作万方",
-      "industry": "有色金属",
-      "score": 0.648,
-      "factors": {
-        "value_ep": 0.111,
-        "value_bp": 0.5714,
-        "momentum_12m1m": 0.5515,
-        "reversal_1m": 0.1116,
-        "quality_roe": 0.0686,
-        "quality_leverage": -0.1503,
-        "quality_fscore": 0.67,
-        "alt_visits": 0,
-        "strategic_tier": 3
-      }
-    },
-    {
-      "rank": 11,
-      "symbol": "000923",
-      "name": "河钢资源",
-      "industry": "钢铁行业",
-      "score": 0.645,
-      "factors": {
-        "value_ep": 0.0553,
-        "value_bp": 1.1494,
-        "momentum_12m1m": 0.1019,
-        "reversal_1m": 0.1805,
-        "quality_roe": 0.0022,
-        "quality_leverage": -0.257,
-        "quality_fscore": 1.0,
-        "alt_visits": 6,
-        "strategic_tier": 3
-      }
-    },
-    {
-      "rank": 12,
-      "symbol": "002128",
-      "name": "电投能源",
-      "industry": "煤炭采选",
-      "score": 0.632,
-      "factors": {
-        "value_ep": 0.0802,
-        "value_bp": 0.6452,
-        "momentum_12m1m": 0.5305,
-        "reversal_1m": 0.1985,
-        "quality_roe": 0.0514,
-        "quality_leverage": -0.2292,
-        "quality_fscore": 1.0,
-        "alt_visits": 3,
-        "strategic_tier": 3
-      }
-    },
-    {
-      "rank": 13,
-      "symbol": "002545",
-      "name": "东方铁塔",
-      "industry": "钢铁行业",
-      "score": 0.63,
-      "factors": {
-        "value_ep": 0.0625,
-        "value_bp": 0.4545,
-        "momentum_12m1m": 1.3597,
-        "reversal_1m": 0.1802,
-        "quality_roe": 0.0402,
-        "quality_leverage": -0.2978,
-        "quality_fscore": 1.0,
-        "alt_visits": 3,
-        "strategic_tier": 3
-      }
-    },
-    {
-      "rank": 14,
-      "symbol": "002443",
-      "name": "金洲管道",
-      "industry": "钢铁行业",
-      "score": 0.623,
-      "factors": {
-        "value_ep": 0.0288,
-        "value_bp": 0.6623,
-        "momentum_12m1m": 0.8195,
-        "reversal_1m": 0.1074,
-        "quality_roe": 0.0115,
-        "quality_leverage": -0.2032,
-        "quality_fscore": 0.67,
-        "alt_visits": 8,
-        "strategic_tier": 3
-      }
-    },
-    {
       "rank": 15,
-      "symbol": "002170",
-      "name": "芭田股份",
-      "industry": "化肥行业",
-      "score": 0.613,
+      "symbol": "000506",
+      "name": "招金黄金",
+      "industry": "贵金属",
+      "score": 0.802,
       "factors": {
-        "value_ep": 0.0925,
-        "value_bp": 0.3185,
-        "momentum_12m1m": 0.1354,
-        "reversal_1m": 0.045,
-        "quality_roe": 0.0701,
-        "quality_leverage": -0.3472,
-        "quality_fscore": 1.0,
-        "alt_visits": 3,
+        "value_ep": 0.0281,
+        "value_bp": 0.0715,
+        "momentum_12m1m": 0.5538,
+        "reversal_1m": 0.0219,
+        "quality_roe": 0.236,
+        "quality_leverage": -0.3709,
+        "quality_fscore": 0.83,
+        "alt_visits": 9,
         "strategic_tier": 3
       }
     },
     {
       "rank": 16,
-      "symbol": "002478",
-      "name": "常宝股份",
-      "industry": "钢铁行业",
-      "score": 0.603,
+      "symbol": "002818",
+      "name": "富森美",
+      "industry": "商业百货",
+      "score": 0.796,
       "factors": {
-        "value_ep": 0.0778,
-        "value_bp": 1.0417,
-        "momentum_12m1m": 0.4211,
-        "reversal_1m": 0.1014,
-        "quality_roe": 0.0111,
-        "quality_leverage": -0.3117,
-        "quality_fscore": 1.0,
-        "alt_visits": 16,
+        "value_ep": 0.0995,
+        "value_bp": 0.7194,
+        "momentum_12m1m": -0.1055,
+        "reversal_1m": 0.0589,
+        "quality_roe": 0.067,
+        "quality_leverage": -0.1224,
+        "quality_fscore": 0.83,
+        "alt_visits": 2,
         "strategic_tier": 3
       }
     },
     {
       "rank": 17,
-      "symbol": "000690",
-      "name": "宝新能源",
-      "industry": "电力行业",
-      "score": 0.602,
+      "symbol": "301308",
+      "name": "江波龙",
+      "industry": "行业-1",
+      "score": 0.779,
       "factors": {
-        "value_ep": 0.103,
-        "value_bp": 1.2658,
-        "momentum_12m1m": 0.3372,
-        "reversal_1m": 0.1928,
-        "quality_roe": 0.024,
-        "quality_leverage": -0.4029,
-        "quality_fscore": 1.0,
-        "alt_visits": 2,
-        "strategic_tier": 2
+        "value_ep": 0.0187,
+        "value_bp": 0.0415,
+        "momentum_12m1m": 6.106,
+        "reversal_1m": -0.1606,
+        "quality_roe": 0.317,
+        "quality_leverage": -0.6555,
+        "quality_fscore": 0.5,
+        "alt_visits": 36,
+        "strategic_tier": 0
       }
     },
     {
       "rank": 18,
-      "symbol": "000869",
-      "name": "张  裕Ａ",
-      "industry": "酿酒行业",
-      "score": 0.598,
+      "symbol": "688525",
+      "name": "佰维存储",
+      "industry": "行业-1",
+      "score": 0.773,
       "factors": {
-        "value_ep": 0.0055,
-        "value_bp": 0.9434,
-        "momentum_12m1m": -0.1565,
-        "reversal_1m": 0.099,
-        "quality_roe": 0.0143,
-        "quality_leverage": -0.12,
-        "quality_fscore": 1.0,
+        "value_ep": 0.0188,
+        "value_bp": 0.0408,
+        "momentum_12m1m": 4.4618,
+        "reversal_1m": -0.3628,
+        "quality_roe": 0.3406,
+        "quality_leverage": -0.6496,
+        "quality_fscore": 0.5,
+        "alt_visits": 19,
+        "strategic_tier": 0
+      }
+    },
+    {
+      "rank": 19,
+      "symbol": "000612",
+      "name": "焦作万方",
+      "industry": "有色金属",
+      "score": 0.764,
+      "factors": {
+        "value_ep": 0.1106,
+        "value_bp": 0.5714,
+        "momentum_12m1m": 0.5515,
+        "reversal_1m": 0.1116,
+        "quality_roe": 0.0686,
+        "quality_leverage": -0.1503,
+        "quality_fscore": 0.83,
         "alt_visits": 0,
         "strategic_tier": 3
       }
     },
     {
-      "rank": 19,
+      "rank": 20,
       "symbol": "000568",
       "name": "泸州老窖",
       "industry": "酿酒行业",
-      "score": 0.594,
+      "score": 0.756,
       "factors": {
         "value_ep": 0.0867,
-        "value_bp": 0.4484,
+        "value_bp": 0.4505,
         "momentum_12m1m": -0.241,
         "reversal_1m": 0.1182,
         "quality_roe": 0.0732,
@@ -352,201 +370,183 @@
       }
     },
     {
-      "rank": 20,
-      "symbol": "000557",
-      "name": "西部创业",
-      "industry": "交运物流",
-      "score": 0.587,
+      "rank": 21,
+      "symbol": "001210",
+      "name": "金房能源",
+      "industry": "公用事业",
+      "score": 0.754,
       "factors": {
-        "value_ep": 0.0522,
-        "value_bp": 1.1905,
-        "momentum_12m1m": -0.1917,
-        "reversal_1m": 0.1268,
-        "quality_roe": 0.0082,
-        "quality_leverage": -0.0897,
-        "quality_fscore": 1.0,
-        "alt_visits": 4,
+        "value_ep": 0.0292,
+        "value_bp": 0.3058,
+        "momentum_12m1m": 1.7628,
+        "reversal_1m": 0.3808,
+        "quality_roe": 0.0943,
+        "quality_leverage": -0.3173,
+        "quality_fscore": 0.67,
+        "alt_visits": 1,
         "strategic_tier": 3
       }
     },
     {
-      "rank": 21,
-      "symbol": "000506",
-      "name": "招金黄金",
-      "industry": "贵金属",
-      "score": 0.578,
+      "rank": 22,
+      "symbol": "000554",
+      "name": "泰山石油",
+      "industry": "石油行业",
+      "score": 0.746,
       "factors": {
-        "value_ep": 0.0277,
-        "value_bp": 0.0706,
-        "momentum_12m1m": 0.5538,
-        "reversal_1m": 0.0219,
-        "quality_roe": 0.236,
-        "quality_leverage": -0.3709,
+        "value_ep": 0.0603,
+        "value_bp": 0.4149,
+        "momentum_12m1m": -0.109,
+        "reversal_1m": 0.1634,
+        "quality_roe": 0.0584,
+        "quality_leverage": -0.2728,
+        "quality_fscore": 1.0,
+        "alt_visits": 3,
+        "strategic_tier": 3
+      }
+    },
+    {
+      "rank": 23,
+      "symbol": "002327",
+      "name": "富安娜",
+      "industry": "纺织服装",
+      "score": 0.745,
+      "factors": {
+        "value_ep": 0.064,
+        "value_bp": 0.6369,
+        "momentum_12m1m": -0.0618,
+        "reversal_1m": 0.0954,
+        "quality_roe": 0.0173,
+        "quality_leverage": -0.181,
+        "quality_fscore": 1.0,
+        "alt_visits": 3,
+        "strategic_tier": 3
+      }
+    },
+    {
+      "rank": 24,
+      "symbol": "002128",
+      "name": "电投能源",
+      "industry": "煤炭采选",
+      "score": 0.744,
+      "factors": {
+        "value_ep": 0.0806,
+        "value_bp": 0.6494,
+        "momentum_12m1m": 0.5305,
+        "reversal_1m": 0.1985,
+        "quality_roe": 0.0514,
+        "quality_leverage": -0.2292,
+        "quality_fscore": 1.0,
+        "alt_visits": 3,
+        "strategic_tier": 3
+      }
+    },
+    {
+      "rank": 25,
+      "symbol": "002259",
+      "name": "升达林业",
+      "industry": "燃气",
+      "score": 0.742,
+      "factors": {
+        "value_ep": 0.0683,
+        "value_bp": 0.1585,
+        "momentum_12m1m": 0.2423,
+        "reversal_1m": 0.1869,
+        "quality_roe": 0.1835,
+        "quality_leverage": -0.3863,
+        "quality_fscore": 0.5,
+        "alt_visits": 0,
+        "strategic_tier": 3
+      }
+    },
+    {
+      "rank": 26,
+      "symbol": "300723",
+      "name": "一品红",
+      "industry": "行业-1",
+      "score": 0.734,
+      "factors": {
+        "value_ep": 0.0105,
+        "value_bp": 0.1016,
+        "momentum_12m1m": -0.2021,
+        "reversal_1m": -0.0509,
+        "quality_roe": 0.3071,
+        "quality_leverage": -0.5804,
+        "quality_fscore": 0.83,
+        "alt_visits": 4,
+        "strategic_tier": 0
+      }
+    },
+    {
+      "rank": 27,
+      "symbol": "600841",
+      "name": "动力新科",
+      "industry": "行业-1",
+      "score": 0.726,
+      "factors": {
+        "value_ep": 0.3356,
+        "value_bp": 0.6897,
+        "momentum_12m1m": 0.2602,
+        "reversal_1m": 0.1005,
+        "quality_roe": 0.0056,
+        "quality_leverage": -0.4248,
+        "quality_fscore": 0.5,
+        "alt_visits": 0,
+        "strategic_tier": 0
+      }
+    },
+    {
+      "rank": 28,
+      "symbol": "002847",
+      "name": "盐津铺子",
+      "industry": "食品饮料",
+      "score": 0.722,
+      "factors": {
+        "value_ep": 0.0626,
+        "value_bp": 0.1433,
+        "momentum_12m1m": -0.2985,
+        "reversal_1m": 0.1617,
+        "quality_roe": 0.1073,
+        "quality_leverage": -0.4887,
+        "quality_fscore": 1.0,
+        "alt_visits": 8,
+        "strategic_tier": 3
+      }
+    },
+    {
+      "rank": 29,
+      "symbol": "000408",
+      "name": "藏格矿业",
+      "industry": "化肥行业",
+      "score": 0.714,
+      "factors": {
+        "value_ep": 0.0395,
+        "value_bp": 0.149,
+        "momentum_12m1m": 0.9032,
+        "reversal_1m": 0.082,
+        "quality_roe": 0.0929,
+        "quality_leverage": -0.0706,
         "quality_fscore": 0.67,
         "alt_visits": 9,
         "strategic_tier": 3
       }
     },
     {
-      "rank": 22,
-      "symbol": "000589",
-      "name": "贵州轮胎",
-      "industry": "橡胶制品",
-      "score": 0.578,
-      "factors": {
-        "value_ep": 0.1068,
-        "value_bp": 1.3158,
-        "momentum_12m1m": 0.0223,
-        "reversal_1m": 0.0874,
-        "quality_roe": 0.0197,
-        "quality_leverage": -0.5142,
-        "quality_fscore": 1.0,
-        "alt_visits": 1,
-        "strategic_tier": 3
-      }
-    },
-    {
-      "rank": 23,
-      "symbol": "001207",
-      "name": "联科科技",
-      "industry": "橡胶制品",
-      "score": 0.565,
-      "factors": {
-        "value_ep": 0.0603,
-        "value_bp": 0.5076,
-        "momentum_12m1m": -0.1805,
-        "reversal_1m": 0.1926,
-        "quality_roe": 0.0273,
-        "quality_leverage": -0.2584,
-        "quality_fscore": 1.0,
-        "alt_visits": 2,
-        "strategic_tier": 3
-      }
-    },
-    {
-      "rank": 24,
-      "symbol": "000531",
-      "name": "穗恒运Ａ",
-      "industry": "电力行业",
-      "score": 0.56,
-      "factors": {
-        "value_ep": 0.0653,
-        "value_bp": 1.1364,
-        "momentum_12m1m": 0.3236,
-        "reversal_1m": 0.2424,
-        "quality_roe": 0.0283,
-        "quality_leverage": -0.5821,
-        "quality_fscore": 1.0,
-        "alt_visits": 7,
-        "strategic_tier": 2
-      }
-    },
-    {
-      "rank": 25,
-      "symbol": "000563",
-      "name": "陕国投Ａ",
-      "industry": "多元金融",
-      "score": 0.557,
-      "factors": {
-        "value_ep": 0.0913,
-        "value_bp": 1.25,
-        "momentum_12m1m": -0.1201,
-        "reversal_1m": 0.037,
-        "quality_roe": 0.0155,
-        "quality_leverage": -0.2918,
-        "quality_fscore": 1.0,
-        "alt_visits": 2,
-        "strategic_tier": 3
-      }
-    },
-    {
-      "rank": 26,
-      "symbol": "001337",
-      "name": "四川黄金",
-      "industry": "贵金属",
-      "score": 0.555,
-      "factors": {
-        "value_ep": 0.038,
-        "value_bp": 0.1131,
-        "momentum_12m1m": 1.0123,
-        "reversal_1m": 0.1675,
-        "quality_roe": 0.1351,
-        "quality_leverage": -0.3833,
-        "quality_fscore": 1.0,
-        "alt_visits": 1,
-        "strategic_tier": 3
-      }
-    },
-    {
-      "rank": 27,
-      "symbol": "002332",
-      "name": "仙琚制药",
-      "industry": "化学制药",
-      "score": 0.552,
-      "factors": {
-        "value_ep": 0.0478,
-        "value_bp": 0.7042,
-        "momentum_12m1m": -0.0912,
-        "reversal_1m": 0.0024,
-        "quality_roe": 0.0155,
-        "quality_leverage": -0.1573,
-        "quality_fscore": 1.0,
-        "alt_visits": 5,
-        "strategic_tier": 1
-      }
-    },
-    {
-      "rank": 28,
-      "symbol": "000001",
-      "name": "平安银行",
-      "industry": "银行",
-      "score": 0.551,
-      "factors": {
-        "value_ep": 0.2132,
-        "value_bp": 2.2727,
-        "momentum_12m1m": -0.0861,
-        "reversal_1m": 0.0637,
-        "quality_roe": 0.0265,
-        "quality_leverage": -0.9098,
-        "quality_fscore": 1.0,
-        "alt_visits": 10,
-        "strategic_tier": 3
-      }
-    },
-    {
-      "rank": 29,
-      "symbol": "000661",
-      "name": "长春高新",
-      "industry": "生物制品",
-      "score": 0.548,
-      "factors": {
-        "value_ep": NaN,
-        "value_bp": 0.7812,
-        "momentum_12m1m": -0.3121,
-        "reversal_1m": 0.0099,
-        "quality_roe": 0.0125,
-        "quality_leverage": -0.183,
-        "quality_fscore": 1.0,
-        "alt_visits": 5,
-        "strategic_tier": 1
-      }
-    },
-    {
       "rank": 30,
-      "symbol": "002027",
-      "name": "分众传媒",
-      "industry": "文化传媒",
-      "score": 0.523,
+      "symbol": "000600",
+      "name": "建投能源",
+      "industry": "电力行业",
+      "score": 0.702,
       "factors": {
-        "value_ep": 0.0499,
-        "value_bp": 0.2137,
-        "momentum_12m1m": -0.224,
-        "reversal_1m": 0.1091,
-        "quality_roe": 0.1205,
-        "quality_leverage": -0.253,
+        "value_ep": 0.1307,
+        "value_bp": 0.7752,
+        "momentum_12m1m": 0.7654,
+        "reversal_1m": 0.2763,
+        "quality_roe": 0.0455,
+        "quality_leverage": -0.5724,
         "quality_fscore": 1.0,
-        "alt_visits": 2,
-        "strategic_tier": 3
+        "alt_visits": 9,
+        "strategic_tier": 2
       }
     }
   ]
