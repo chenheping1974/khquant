@@ -32,7 +32,7 @@ if today.weekday() >= 5:  # 周六日休市
     logger.info(f"周末休市, 跳过数据拉取")
     need_fetch = False
 else:
-    target = str(today)
+    target = str(today - timedelta(days=1))  # 昨天
     now = pd.Timestamp.now()
     latest_partition = a_stock_dir / f"year={now.year}" / f"month={now.month}" / "data.parquet"
     need_fetch = True
@@ -41,7 +41,7 @@ else:
             df = pd.read_parquet(latest_partition)
             sample = df[df["symbol"].isin(df["symbol"].unique()[:10])]
             if (sample["trade_date"].astype(str) == target).any():
-                logger.info(f"抽查已有今日数据({target}), 跳过")
+                logger.info(f"抽查已有昨日数据({target}), 跳过")
                 need_fetch = False
         except: pass
 
