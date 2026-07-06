@@ -61,6 +61,24 @@ fout = open(out_path, "w")
 print(f"日期: {latest_date.date()}\n")
 fout.write(f"khquant v3.0 选股信号 — {latest_date.date()}\n{'='*55}\n\n")
 
+# ── 分析师数据 (akshare实时拉) ──
+analyst_map = {}
+try:
+    import akshare as ak
+    fc = ak.stock_profit_forecast_em()
+    if fc is not None and not fc.empty:
+        fc['symbol'] = fc['代码'].astype(str).str.zfill(6)
+        buy_col = '机构投资评级(近六个月)-买入'
+        neut_col = '机构投资评级(近六个月)-增持'
+        fc['a_buy'] = fc[buy_col].fillna(0) / (fc[buy_col].fillna(0)+fc[neut_col].fillna(0)+1)
+        ep25 = pd.to_numeric(fc.get('2026预测每股收益',fc.get('2025预测每股收益',pd.Series([np.nan]))),errors='coerce')
+        ep26 = pd.to_numeric(fc.get('2027预测每股收益',ep25),errors='coerce')
+        fc['a_eps'] = (ep26/ep25.replace(0,np.nan)-1).clip(-0.5,1.0)
+        analyst_map = dict(zip(fc['symbol'], zip(fc['a_buy'], fc['a_eps'])))
+        logger.info(f"分析师: {len(analyst_map)}只")
+except Exception as e:
+    logger.warning(f"分析师跳过: {e}")
+
 results=[]
 for sym in syms[:N_PE]:  # 全量PE覆盖的股票
     grp=raw[raw['symbol']==sym].sort_values('trade_date')
@@ -111,10 +129,13 @@ for sym in syms[:N_PE]:  # 全量PE覆盖的股票
     ind_code=ind_map.get(str(sym),-1)
     tier_score=float(tiers.get(str(ind_code),0) if isinstance(tiers.get(str(ind_code),0),(int,float)) else (1.0 if tiers.get(str(ind_code))==1 else 0.5 if tiers.get(str(ind_code))==2 else 0))
 
+    # Analyst
+    a_buy, a_eps = analyst_map.get(sym, (np.nan, np.nan))
+
     results.append({
         'symbol':sym,'v_ep':v_ep,'v_bp':v_bp,'v_size':v_size,'mktcap_raw':mktcap,'momentum':mom,'reversal':rev,
         'q_roe':q_roe,'q_leverage':q_leverage,'q_fscore':q_fscore,
-        'a_visit':a_visit,'strategic':tier_score,
+        'a_visit':a_visit,'a_buy':a_buy,'a_eps':a_eps,'strategic':tier_score,
         'industry':ind_names.get(str(ind_code),f'行业{ind_code}')
     })
 
@@ -128,7 +149,7 @@ if 'mktcap_raw' in df.columns:
     print(f"  市值过滤: {len(df)}/{n_before} 只 (剔除最小30%)")
 
 # Z-score标准化各因子
-factor_cols = ['v_ep','v_bp','v_size','momentum','reversal','q_roe','q_leverage','q_fscore']
+factor_cols = ['v_ep','v_bp','v_size','momentum','reversal','q_roe','q_leverage','q_fscore','a_buy','a_eps']
 for col in factor_cols:
     if col in df.columns and df[col].notna().any():
         mu,sigma = df[col].mean(), df[col].std()
@@ -141,7 +162,8 @@ df['composite'] = (
     df['q_roe_z'].fillna(0)*0.20 + df['q_leverage_z'].fillna(0)*0.10 + df['q_fscore_z'].fillna(0)*0.10 +
     df['v_ep_z'].fillna(0)*0.10 + df['v_bp_z'].fillna(0)*0.05 + df['v_size_z'].fillna(0)*0.05 +
     df['momentum_z'].fillna(0)*0.15 + df['reversal_z'].fillna(0)*0.15 +
-    df['strategic'].fillna(0)*0.05 + df['a_visit'].apply(lambda x: min(x,50)/50*0.05)
+    df['a_buy_z'].fillna(0)*0.05 + df['a_eps_z'].fillna(0)*0.05 +
+    df['strategic'].fillna(0)*0.05
 )
 
 df=df.dropna(subset=['composite']).sort_values('composite',ascending=False).head(30)
