@@ -40,8 +40,8 @@ def safe_json(path):
     try: return json.load(open(path))
     except: return {}
 
-fin=safe_read('.cache_fin_infer.parquet')  # Q1全量财报
-if not fin.empty: fin['pubDate']=pd.to_datetime(fin['pubDate'])
+fin=safe_read('.cache_fin_infer.parquet')  # 批量财报(5878只)
+if not fin.empty and 'pubDate' in fin.columns: fin['pubDate']=pd.to_datetime(fin['pubDate'])
 holder=safe_read('.cache_holder_all.parquet')  # 全量股东户数
 if not holder.empty:
     holder['end_date']=pd.to_datetime(holder['end_date'])

@@ -33,9 +33,9 @@ jobs:
         if: env.SEASON == 'true'
         run: pip install pandas numpy pyarrow akshare
 
-      - name: Update Financial Data (Q1)
+      - name: Update Financial Data
         if: env.SEASON == 'true'
-        run: python scripts/download_fin_q1.py
+        run: python scripts/download_fin_batch.py
 
       - name: Commit & Push
         if: env.SEASON == 'true'
