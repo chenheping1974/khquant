@@ -36,10 +36,15 @@ if not existing:
             break
         except: pass
 
-# 抽查10只: 有今天数据则跳过, 周末直接跳
+# 抽查10只: 有今天数据则跳过, 周末/未收盘跳过
+import datetime as _dt
 today = date.today()
-if today.weekday() >= 5:  # 周六日休市
+now_bj = _dt.datetime.now() + _dt.timedelta(hours=8)  # 北京时间
+if today.weekday() >= 5:
     logger.info(f"周末休市, 跳过数据拉取")
+    need_fetch = False
+elif now_bj.hour < 16:  # 16点前未收盘
+    logger.info(f"未收盘(北京时间{now_bj.hour}点), 跳过")
     need_fetch = False
 else:
     target = str(today)  # 今天
