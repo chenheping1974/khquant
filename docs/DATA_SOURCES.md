@@ -53,7 +53,22 @@
 用途: 补充 debt_ratio + CFOtoNP (批量接口缺这两个)
 ```
 
-## 5. 股东户数 — 东财 datacenter
+## 5. 资产负债表(负债率) — 东财 datacenter
+
+```
+接口: https://datacenter.eastmoney.com/securities/api/data/v1/get
+参数:
+  reportName=RPT_DMSK_FN_BALANCE
+  columns=SECURITY_CODE,DEBT_ASSET_RATIO
+  filter=(SECURITY_CODE>="000000")(SECURITY_CODE<="000999")(REPORT_DATE>='2026-03-01')
+  pageSize=2000
+  source=HSF10, client=PC
+返回: [{SECURITY_CODE, DEBT_ASSET_RATIO}, ...] (500条/批)
+频率: 季度, 按代码前缀分批(000/002/300/600/601/603/605/688)
+覆盖: 3251只
+```
+
+## 6. 股东户数 — 东财 datacenter
 
 ```
 接口: https://datacenter.eastmoney.com/securities/api/data/v1/get
