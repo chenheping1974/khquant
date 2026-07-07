@@ -39,4 +39,41 @@ for q in quarters:
 result = pd.concat(all_data, ignore_index=True)
 result.to_parquet('.cache_fin_batch.parquet')
 n = result['symbol'].nunique()
-logger.info(f'完成: {len(result)}条 {n}只 ({(time.time()-t0):.0f}s)')
+logger.info(f'批量数据: {len(result)}条 {n}只 ({(time.time()-t0):.0f}s)')
+
+# 合并: 批量数据 + 负债率 + 生成最终推理缓存
+logger.info('合并负债率 & 生成 .cache_fin_infer.parquet...')
+latest = result[result['report_date'] == '2026-03-31'].copy()
+latest = latest.rename(columns={'net_profit':'netProfit','gross_margin':'gpMargin',
+    'profit_growth':'profitGrowth','revenue_growth':'revenueGrowth'})
+
+# 下载负债率
+import requests, json, time as t
+prefixes = ['000','001','002','003','300','301','600','601','603','605','688','689','920']
+debt_rows = []
+for pf in prefixes:
+    try:
+        r = requests.get("https://datacenter.eastmoney.com/securities/api/data/v1/get",
+            params={"reportName":"RPT_DMSK_FN_BALANCE","columns":"SECURITY_CODE,DEBT_ASSET_RATIO",
+            "filter":f'(SECURITY_CODE>="{pf}000")(SECURITY_CODE<="{pf}999")(REPORT_DATE>=\'2026-03-01\')',
+            "pageNumber":1,"pageSize":2000,"sortTypes":1,"sortColumns":"SECURITY_CODE",
+            "source":"HSF10","client":"PC"},headers={'User-Agent':'Mozilla/5.0'},timeout=10)
+        for row in r.json().get('result',{}).get('data',[]):
+            dr = row.get('DEBT_ASSET_RATIO')
+            if dr and dr != '':
+                debt_rows.append({'symbol':str(row['SECURITY_CODE']).zfill(6),'debt_ratio':float(dr)})
+    except: pass
+    t.sleep(0.3)
+debt_df = pd.DataFrame(debt_rows)
+latest = latest.merge(debt_df, on='symbol', how='left')
+real_n = latest['debt_ratio'].notna().sum()
+# 行业均值填充缺失
+ind = json.load(open('.industry_names.json')); code_to_name = ind.get('code_to_name',{})
+ind_map = json.load(open('.industry_cache.json'))
+latest['_ind'] = latest['symbol'].map(lambda s: code_to_name.get(str(ind_map.get(str(s),-1)),'未知'))
+ind_avg = latest.groupby('_ind')['debt_ratio'].mean().fillna(0.5)
+latest['debt_ratio'] = latest.apply(lambda r: r['debt_ratio'] if not pd.isna(r['debt_ratio']) else ind_avg.get(r['_ind'],0.5), axis=1)
+latest.drop(columns=['_ind'], inplace=True)
+latest['pubDate'] = pd.Timestamp.now()
+latest.to_parquet('.cache_fin_infer.parquet')
+logger.info(f'推理缓存: {len(latest)}只, 真实负债率:{real_n}')
