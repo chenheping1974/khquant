@@ -1,66 +1,155 @@
-# khquant 数据源清单
+# khquant 数据源详细清单
 
-## 日频数据 (每天推理需要)
-
-| 因子 | 数据 | API | 稳定性 | 速度 | 覆盖 |
-|------|------|-----|--------|------|------|
-| E/P, B/P, Size | PE/PB/市值 | `腾讯财经 web.sqt.gtimg.cn/q=` | ✅ 极稳 | 50只/0.2s | 5000+ |
-| 价格动量 | K线 OHLCV | `Sina money.finance.sina.com.cn` | ✅ 稳 | 1只/1s | 5000+ |
-| 短期反转 | K线 OHLCV | 同上 | ✅ | | |
-| 分析师买入比 | 盈利预测 | `akshare stock_profit_forecast_em()` | ⚠️ 偶尔断 | 6s/次 | 2785 |
-| EPS增速 | 盈利预测 | 同上 | ⚠️ | | 2785 |
-| 机构调研 | 调研数据 | `akshare stock_jgdy_tj_em()` | ⚠️ 偶尔断 | 15s/次 | 4682 |
-| 舆情热度 | 热门排行 | `akshare stock_hot_rank_em()` | ⚠️ 偶尔断 | 2s/次 | 100 |
-
-## 季度数据 (手动/Workflow 定期更新)
-
-| 因子 | 数据 | API | 稳定性 | 速度 | 覆盖 |
-|------|------|-----|--------|------|------|
-| ROE, EPS, 毛利率 | 批量财报 | `akshare stock_yjbb_em(date='20260331')` | ⚠️ 偶尔断 | 6000只/5s | 5878 |
-| 负债率, CFO/NP | 详细财报 | `akshare stock_financial_analysis_indicator(symbol, start_year)` | ❌ 批量会封 | 1只/1s | 1177 |
-| 股东户数 | 户数数据 | `Eastmoney datacenter.eastmoney.com RPT_F10_EH_HOLDERNUM` | ✅ 稳 | 1只/0.1s | 4944 |
-| 公告情绪 | 公告标题 | `Eastmoney np-anotice-stock.eastmoney.com/api/security/ann` | ✅ 稳 | 1只/0.1s | 3398 |
-
-## 静态数据
-
-| 因子 | 数据 | API | 覆盖 |
-|------|------|-----|------|
-| 行业分类 | 申万行业 | `Eastmoney emweb.securities.eastmoney.com F10 CompanySurvey` | 1496只 |
-| 战略行业 | 十四五重点 | 本地映射表 (Tier1/Tier2/Tier3) | 288行业 |
-
-## 使用方式
+## 1. 日频 K线 — Sina
 
 ```
-推理 (daily_inference.py):
-  - 腾讯PE: 实时拉取, 5000只 ~50s
-  - K线: 从 khquant-data 仓库读取
-  - 财报: 读取 .cache_fin_infer.parquet (批量接口, 102s/13季)
-  - 股东户数: 读取 .cache_holder_all.parquet
-  - 分析师: 读取 .cache_analyst_fc.parquet
-  - 机构调研: 读取 .cache_analyst_visit.parquet
-  - 公告: 读取 .cache_announce.parquet
-  - 行业: 读取 .industry_cache.json + .industry_names.json
-
-回测 (verify_v3_blackrock.py):
-  - 需要时间点对齐的历史 PE 和财报
-  - 批量接口 stock_yjbb_em 可提供历史 EPS/ROE
-
-更新频率:
-  - 日: K线增量 (fetch_incremental.py → Sina)
-  - 月: 股东户数 + 公告 (download_announce.py → Eastmoney)
-  - 季: 财报 (download_fin_batch.py → akshare stock_yjbb_em)
+接口: https://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData
+参数: symbol=sh600519, scale=240, ma=no, datalen=5000
+返回: [{day,open,high,low,close,volume}, ...]
+频率: 日, 增量模式 (datalen=1)
+文件: src/data/fetcher.py → fetch_a_stock_daily()
+脚本: scripts/fetch_incremental.py
 ```
 
-## ⚠️ 避坑指南
+## 2. PE/PB/市值 — 腾讯财经
 
-1. **akshare stock_financial_analysis_indicator 逐只调用会封IP**
-   → 用 stock_yjbb_em 批量接口替代（6000只/次）
+```
+接口: https://web.sqt.gtimg.cn/q=sh600519,sz000001
+参数: 股票列表逗号分隔, 单次50只
+返回: 88字段, ~分隔
+  字段[3]=最新价, [39]=PE(TTM), [46]=PB, [44]=市值, [72]=总股本, [63]=股息率
+频率: 实时, 每次拉取
+文件: src/data/tencent_fetcher.py → fetch_valuation_batch()
+推理: daily_inference.py → fetch_valuation_batch(symbols=syms[:N_PE])
+```
 
-2. **baostock 不稳定, 经常断连**
-   → 不用。财报用 akshare 批量接口, PE用腾讯
+## 3. 批量财报 — akshare stock_yjbb_em (⭐主力)
 
-3. **东财 datacenter API 需要正确的 reportName**
-   → RPT_F10_EH_HOLDERNUM (股东户数) 已验证可用
+```
+接口: akshare.stock_yjbb_em(date='20260331')
+参数: date=YYYYMMDD (报告期)
+返回: 5964只/次, 字段:
+  股票代码(symbol), 每股收益(eps), 营业总收入(revenue),
+  营业总收入-同比增长(revenue_growth), 净利润(net_profit),
+  净利润-同比增长(profit_growth), 净资产收益率(roe),
+  销售毛利率(gross_margin), 每股经营现金流量(ocf_per_share),
+  所处行业(industry), 每股净资产, 最新公告日期
+频率: 季度, 102秒/13季度
+文件: scripts/download_fin_batch.py
+工作流: .github/workflows/quarterly.yml
+```
 
-4. **腾讯 PE 接口没有历史数据**
-   → 回测需要历史 PE 时, 从季度 EPS + 历史股价推算
+## 4. 详细财报 — akshare stock_financial_analysis_indicator (⚠️逐只,会封)
+
+```
+接口: akshare.stock_financial_analysis_indicator(symbol='600519', start_year='2023')
+参数: symbol(6位代码), start_year
+返回: 86字段, 含:
+  净资产收益率(%), 主营业务利润率(%), 资产负债率(%),
+  摊薄每股收益(元), 净利润(元), 销售净利率(%),
+  经营现金净流量与净利润的比率(%)
+频率: 季度, 逐只调用, 1s/只, 会封IP
+文件: scripts/download_fin_q1.py (备用)
+用途: 补充 debt_ratio + CFOtoNP (批量接口缺这两个)
+```
+
+## 5. 股东户数 — 东财 datacenter
+
+```
+接口: https://datacenter.eastmoney.com/securities/api/data/v1/get
+参数:
+  reportName=RPT_F10_EH_HOLDERNUM
+  columns=SECURITY_CODE,END_DATE,HOLDER_TOTAL_NUM
+  filter=(SECURITY_CODE="600519")
+  pageNumber=1, pageSize=20
+  sortTypes=-1, sortColumns=END_DATE
+  source=HSF10, client=PC
+返回: [{SECURITY_CODE, END_DATE, HOLDER_TOTAL_NUM}, ...]
+频率: 季度, 每只0.1s
+文件: 内联在 daily_inference.py + monthly.yml
+缓存: .cache_holder_all.parquet
+```
+
+## 6. 公告情绪 — 东财公告
+
+```
+接口: https://np-anotice-stock.eastmoney.com/api/security/ann
+参数: page_size=30, page_index=1, ann_type=A, stock_list=600519
+返回: [{title, notice_date}, ...]
+关键词匹配:
+  利好: 业绩预增,中标,回购,增持,分红,送转,预盈,扭亏,重大合同,突破,获批,注册
+  利空: 减持,亏损,退市,立案,警示,问询,处罚,诉讼,冻结,终止,修正,下调
+频率: 日, 每只0.1s
+文件: scripts/download_announce.py (断点续传)
+缓存: .cache_announce.parquet
+工作流: .github/workflows/monthly.yml
+```
+
+## 7. 分析师评级 — akshare stock_profit_forecast_em
+
+```
+接口: akshare.stock_profit_forecast_em()
+参数: 无参
+返回: 2785只, 字段:
+  代码, 名称, 研报数,
+  机构投资评级(近六个月)-买入/增持/中性/减持/卖出,
+  2025/2026/2027预测每股收益
+频率: 日
+推理: daily_inference.py 实时拉取
+缓存: .cache_analyst_fc.parquet
+```
+
+## 8. 机构调研 — akshare stock_jgdy_tj_em
+
+```
+接口: akshare.stock_jgdy_tj_em()
+参数: 无参
+返回: 22278条, 字段:
+  代码, 名称, 接待机构数量, 接待日期, 接待方式
+频率: 日
+推理: daily_inference.py 实时拉取
+缓存: .cache_analyst_visit.parquet
+```
+
+## 9. 行业分类 — 东财 F10
+
+```
+接口: https://emweb.securities.eastmoney.com/PC_HSF10/CompanySurvey/CompanySurveyAjax
+参数: code=SH600519 或 SZ000001
+返回: jbzl.sshy (申万行业), jbzl.sszjhhy (证监会行业)
+频率: 静态, 逐个查询
+文件: scripts/download_industries.py
+缓存: .industry_cache.json (symbol→行业code)
+     .industry_names.json (code→行业名, 战略分级)
+```
+
+## 10. 舆情热度 — akshare stock_hot_rank_em
+
+```
+接口: akshare.stock_hot_rank_em()
+参数: 无参
+返回: 100只, 字段: 当前排名, 代码, 股票名称, 最新价, 涨跌幅
+频率: 日
+推理: daily_inference.py 实时拉取 (仅当日有效)
+```
+
+## 缓存文件说明
+
+```
+.cache_fin_infer.parquet  → Q1批量财报 (EPS,ROE,debt_ratio等) ~5878只
+.cache_fin_batch.parquet  → 全13季批量财报                           ~110K条
+.cache_holder_all.parquet → 股东户数                               4944只
+.cache_announce.parquet   → 公告情绪                               3398只
+.cache_analyst_fc.parquet → 分析师评级                             2359只
+.cache_analyst_visit.parquet → 机构调研                            4682只
+.industry_cache.json      → 股票→行业编码                          1496只
+.industry_names.json      → 行业编码→名称+战略分级                   288行业
+```
+
+## 工作流说明
+
+```
+daily.yml     每晚20:00  K线增量(Sina) → 推理(腾讯PE+缓存) → 结果push
+monthly.yml   每月1号     股东户数(东财datacenter) + 公告(东财公告API)
+quarterly.yml 季报期周六  财报(akshare stock_yjbb_em)
+```
