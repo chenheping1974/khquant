@@ -24,12 +24,13 @@ for q in quarters:
                 '营业总收入-同比增长':'revenue_growth','净利润-净利润':'net_profit',
                 '净利润-同比增长':'profit_growth','净资产收益率':'roe',
                 '销售毛利率':'gross_margin','每股经营现金流量':'ocf_per_share',
-                '所处行业':'industry'
+                '每股净资产':'bvps','所处行业':'industry'
             })
             df['symbol'] = df['symbol'].astype(str).str.zfill(6)
             df['report_date'] = f"{q[:4]}-{q[4:6]}-{q[6:]}"
             cols = ['symbol','report_date','eps','revenue','revenue_growth',
-                    'net_profit','profit_growth','roe','gross_margin','ocf_per_share','industry']
+                    'net_profit','profit_growth','roe','gross_margin','ocf_per_share',
+                    'bvps','industry']
             all_data.append(df[[c for c in cols if c in df.columns]])
             logger.info(f'{q}: {len(df)}只 ({time.time()-t0:.0f}s)')
     except Exception as e:
