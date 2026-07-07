@@ -53,13 +53,10 @@ jobs:
           print(f'完成:{len(rows)}条')
           "
 
-      - name: Update Announcements
-        run: python scripts/download_announce.py
-
       - name: Commit
         run: |
           git config user.name "khquant-bot"
           git config user.email "bot@khquant.local"
-          git add .cache_holder_all.parquet .cache_announce.parquet
+          git add .cache_holder_all.parquet
           git diff --staged --quiet || git commit -m "data: monthly update $(date +%Y-%m)"
           git push || true
