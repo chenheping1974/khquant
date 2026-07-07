@@ -39,6 +39,7 @@ jobs:
         run: |
           git config user.name "khquant-bot"
           git config user.email "bot@khquant.local"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository_owner }}/khquant-data.git
           git add .
           git diff --staged --quiet || git commit -m "data: $(date +%Y-%m-%d) daily update"
           git push
@@ -52,9 +53,10 @@ jobs:
         run: |
           git config user.name "khquant-bot"
           git config user.email "bot@khquant.local"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository_owner }}/khquant.git
           git add results/latest.json results/signals-*.txt 2>/dev/null || true
           git diff --staged --quiet || git commit -m "signals: $(date +%Y-%m-%d) daily picks"
-          git push || true
+          git push
 
       - name: Upload Signals
         uses: actions/upload-artifact@v4
