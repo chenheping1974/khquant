@@ -188,11 +188,7 @@ if 'mktcap_raw' in df.columns and 'v_size' in df.columns:
     print(f"  Size过滤: {n_small}/{len(df)} 只设为0 (最小30%市值)")
 
 # Z-score标准化各因子
-factor_cols = ['v_ep','v_bp','v_size','m_price','m_risk_adj','m_cross','m_earn','reversal','q_roe','q_leverage','q_fscore','a_buy','a_eps','a_announce']
-
-# 截面动量: 每日 m_price 的百分位排名
-if 'm_price' in df.columns and df['m_price'].notna().any():
-    df['m_cross'] = df['m_price'].rank(pct=True)  # 0~1
+factor_cols = ['v_ep','v_bp','v_size','m_price','m_risk_adj','m_earn','reversal','q_roe','q_leverage','q_fscore']
 
 for col in factor_cols:
     if col in df.columns and df[col].notna().any():
@@ -203,17 +199,14 @@ for col in factor_cols:
 
 # 加权总分 (BlackRock: 基本面40% + 价量30% + 另类15% + 其他15%)
 df['composite'] = (
-    # 基本面 40%: Quality
-    df['q_roe_z'].fillna(0)*0.15 + df['q_leverage_z'].fillna(0)*0.10 + df['q_fscore_z'].fillna(0)*0.15 +
-    # 价量 30%: Value(15) + Reversal(10) + 动量-截面(5)
-    df['v_ep_z'].fillna(0)*0.08 + df['v_bp_z'].fillna(0)*0.04 + df['v_size_z'].fillna(0)*0.03 +
-    df['reversal_z'].fillna(0)*0.10 + df['m_cross'].fillna(0)*0.05 +
-    # 动量 20%: 价格+风险调整+盈利
+    # Quality 40%
+    df['q_roe_z'].fillna(0)*0.20 + df['q_leverage_z'].fillna(0)*0.10 + df['q_fscore_z'].fillna(0)*0.10 +
+    # Value 30%
+    df['v_ep_z'].fillna(0)*0.15 + df['v_bp_z'].fillna(0)*0.10 + df['v_size_z'].fillna(0)*0.05 +
+    # Momentum 20%
     df['m_price_z'].fillna(0)*0.10 + df['m_risk_adj_z'].fillna(0)*0.05 + df['m_earn_z'].fillna(0)*0.05 +
-    # 另类 5%: 分析师+公告
-    df['a_buy_z'].fillna(0)*0.02 + df['a_eps_z'].fillna(0)*0.02 + df['a_announce_z'].fillna(0)*0.01 +
-    # 其他 5%
-    df['strategic'].fillna(0)*0.05
+    # Structure 10%
+    df['reversal_z'].fillna(0)*0.05 + df['strategic'].fillna(0)*0.05
 )
 # ── 因子覆盖报告 ──
 print(f"\n{'='*55}")
@@ -234,11 +227,10 @@ print(f"EPS增速覆盖: {df['a_eps'].notna().sum()} 只")
 print(f"机构调研覆盖: {(df['a_visit']>0).sum()} 只")
 print(f"战略行业覆盖: {(df['strategic']>0).sum()} 只")
 print(f"\n因子权重:")
-print(f"  基本面 40%: ROE(15%) + 杠杆(10%) + F-Score(15%)")
-print(f"  价量   30%: E/P(8%) + B/P(4%) + Size(3%) + 反转(10%) + 截面动量(5%)")
-print(f"  动量   20%: 价格动量(10%) + 风险调整(5%) + 盈利动量(5%)")
-print(f"  另类    5%: 分析师(4%) + 公告(1%)")
-print(f"  其他    5%: 战略行业(5%)")
+print(f"  Quality 40%: ROE(20%) + 杠杆(10%) + F-Score(10%)")
+print(f"  Value   30%: E/P(15%) + B/P(10%) + Size(5%)")
+print(f"  Momentum 20%: 价格动量(10%) + 风险调整(5%) + 盈利动量(5%)")
+print(f"  Structure 10%: 反转(5%) + 战略行业(5%)")
 print(f"{'='*55}\n")
 
 # 写入文件
@@ -294,11 +286,16 @@ for _, r in df.iterrows():
         "factors": {
             "value_ep": round(float(r.get("v_ep", 0) or 0), 4),
             "value_bp": round(float(r.get("v_bp", 0) or 0), 4),
+            "value_ep": round(float(r.get("v_ep", 0) or 0), 4),
+            "value_bp": round(float(r.get("v_bp", 0) or 0), 4),
+            "size": round(float(r.get("v_size", 0) or 0), 4),
             "momentum_price": round(float(r.get("m_price", 0) or 0), 4),
             "momentum_risk_adj": round(float(r.get("m_risk_adj", 0) or 0), 4),
-            "momentum_cross": round(float(r.get("m_cross", 0) or 0), 2),
             "momentum_earn": round(float(r.get("m_earn", 0) or 0), 4),
-            "reversal_1m": round(float(r.get("reversal", 0) or 0), 4),
+            "reversal": round(float(r.get("reversal", 0) or 0), 4),
+            "quality_roe": round(float(r.get("q_roe", 0) or 0), 4),
+            "quality_leverage": round(float(r.get("q_leverage", 0) or 0), 4),
+            "quality_fscore": round(float(r.get("q_fscore", 0) or 0), 2),
             "quality_roe": round(float(r.get("q_roe", 0) or 0), 4),
             "quality_leverage": round(float(r.get("q_leverage", 0) or 0), 4),
             "quality_fscore": round(float(r.get("q_fscore", 0) or 0), 2),
