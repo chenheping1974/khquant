@@ -1,6 +1,6 @@
 {
   "date": "2026-09-23",
-  "updated": "2026-09-30 17:29:34.813886",
+  "updated": "2026-10-01 17:55:57.843741",
   "method": "BlackRock 4/3/2/1",
   "data_freshness": {
     "财报": "✅ 财报: 0天前 (>120天警告)",
@@ -35,7 +35,7 @@
       "symbol": "001309",
       "name": "德明利",
       "industry": "半导体",
-      "score": 2.393,
+      "score": 2.394,
       "factors": {
         "value_ep": 0.0839,
         "value_bp": 0.1202,
@@ -98,7 +98,7 @@
       "symbol": "600841",
       "name": "动力新科",
       "industry": "行业-1",
-      "score": 1.796,
+      "score": 1.797,
       "factors": {
         "value_ep": 0.4115,
         "value_bp": 0.813,
@@ -140,7 +140,7 @@
       "symbol": "002842",
       "name": "翔鹭钨业",
       "industry": "小金属",
-      "score": 1.332,
+      "score": 1.333,
       "factors": {
         "value_ep": 0.0574,
         "value_bp": 0.2008,
@@ -161,7 +161,7 @@
       "symbol": "688146",
       "name": "中船特气",
       "industry": "行业-1",
-      "score": 1.319,
+      "score": 1.32,
       "factors": {
         "value_ep": 0.0051,
         "value_bp": 0.0595,
@@ -203,7 +203,7 @@
       "symbol": "603629",
       "name": "利通电子",
       "industry": "行业-1",
-      "score": 1.229,
+      "score": 1.23,
       "factors": {
         "value_ep": 0.0268,
         "value_bp": 0.0749,
@@ -224,7 +224,7 @@
       "symbol": "601997",
       "name": "贵阳银行",
       "industry": "行业-1",
-      "score": 1.227,
+      "score": 1.228,
       "factors": {
         "value_ep": 0.2506,
         "value_bp": 3.2258,
@@ -287,7 +287,7 @@
       "symbol": "301377",
       "name": "鼎泰高科",
       "industry": "行业-1",
-      "score": 1.174,
+      "score": 1.175,
       "factors": {
         "value_ep": 0.0066,
         "value_bp": 0.0188,
@@ -329,7 +329,7 @@
       "symbol": "002552",
       "name": "宝鼎科技",
       "industry": "电子",
-      "score": 1.158,
+      "score": 1.159,
       "factors": {
         "value_ep": 0.0138,
         "value_bp": 0.0951,
@@ -371,7 +371,7 @@
       "symbol": "600961",
       "name": "株冶集团",
       "industry": "行业-1",
-      "score": 1.132,
+      "score": 1.133,
       "factors": {
         "value_ep": 0.1028,
         "value_bp": 0.2421,
@@ -455,7 +455,7 @@
       "symbol": "002432",
       "name": "九安医疗",
       "industry": "医疗器械",
-      "score": 1.09,
+      "score": 1.091,
       "factors": {
         "value_ep": 0.157,
         "value_bp": 0.8197,
@@ -497,7 +497,7 @@
       "symbol": "300209",
       "name": "行云科技",
       "industry": "行业-1",
-      "score": 1.08,
+      "score": 1.081,
       "factors": {
         "value_ep": NaN,
         "value_bp": 0.0305,
