@@ -1,6 +1,6 @@
 {
   "date": "2026-09-23",
-  "updated": "2026-10-02 17:18:57.939594",
+  "updated": "2026-10-06 17:49:03.222114",
   "method": "BlackRock 4/3/2/1",
   "data_freshness": {
     "财报": "✅ 财报: 0天前 (>120天警告)",
@@ -35,7 +35,7 @@
       "symbol": "001309",
       "name": "德明利",
       "industry": "半导体",
-      "score": 2.398,
+      "score": 2.397,
       "factors": {
         "value_ep": 0.0839,
         "value_bp": 0.1202,
@@ -389,27 +389,6 @@
     },
     {
       "rank": 19,
-      "symbol": "300475",
-      "name": "香农芯创",
-      "industry": "行业-1",
-      "score": 1.13,
-      "factors": {
-        "value_ep": 0.056,
-        "value_bp": 0.0992,
-        "size": -24.9534,
-        "momentum_price": 1.8361,
-        "momentum_risk_adj": 1.8966,
-        "momentum_earn": NaN,
-        "reversal": -0.1648,
-        "quality_roe": 31.53,
-        "quality_leverage": -41.5913,
-        "quality_fscore": 0.33,
-        "alt_visits": 2,
-        "strategic_tier": 0
-      }
-    },
-    {
-      "rank": 20,
       "symbol": "000612",
       "name": "焦作万方",
       "industry": "有色金属",
@@ -430,11 +409,32 @@
       }
     },
     {
+      "rank": 20,
+      "symbol": "300475",
+      "name": "香农芯创",
+      "industry": "行业-1",
+      "score": 1.13,
+      "factors": {
+        "value_ep": 0.056,
+        "value_bp": 0.0992,
+        "size": -24.9534,
+        "momentum_price": 1.8361,
+        "momentum_risk_adj": 1.8966,
+        "momentum_earn": NaN,
+        "reversal": -0.1648,
+        "quality_roe": 31.53,
+        "quality_leverage": -41.5913,
+        "quality_fscore": 0.33,
+        "alt_visits": 2,
+        "strategic_tier": 0
+      }
+    },
+    {
       "rank": 21,
       "symbol": "601390",
       "name": "中国中铁",
       "industry": "行业-1",
-      "score": 1.102,
+      "score": 1.103,
       "factors": {
         "value_ep": 0.1855,
         "value_bp": 3.0303,
@@ -473,27 +473,6 @@
     },
     {
       "rank": 23,
-      "symbol": "300209",
-      "name": "行云科技",
-      "industry": "行业-1",
-      "score": 1.087,
-      "factors": {
-        "value_ep": NaN,
-        "value_bp": 0.0305,
-        "size": -23.9271,
-        "momentum_price": 5.7413,
-        "momentum_risk_adj": 6.2153,
-        "momentum_earn": NaN,
-        "reversal": -0.0778,
-        "quality_roe": -2.43,
-        "quality_leverage": -41.698,
-        "quality_fscore": 0.17,
-        "alt_visits": 1,
-        "strategic_tier": 0
-      }
-    },
-    {
-      "rank": 24,
       "symbol": "000685",
       "name": "中山公用",
       "industry": "公用事业",
@@ -511,6 +490,27 @@
         "quality_fscore": 0.33,
         "alt_visits": 7,
         "strategic_tier": 3
+      }
+    },
+    {
+      "rank": 24,
+      "symbol": "300209",
+      "name": "行云科技",
+      "industry": "行业-1",
+      "score": 1.087,
+      "factors": {
+        "value_ep": NaN,
+        "value_bp": 0.0305,
+        "size": -23.9271,
+        "momentum_price": 5.7413,
+        "momentum_risk_adj": 6.2153,
+        "momentum_earn": NaN,
+        "reversal": -0.0778,
+        "quality_roe": -2.43,
+        "quality_leverage": -41.698,
+        "quality_fscore": 0.17,
+        "alt_visits": 1,
+        "strategic_tier": 0
       }
     },
     {
@@ -560,7 +560,7 @@
       "symbol": "000498",
       "name": "山东路桥",
       "industry": "工程建设",
-      "score": 1.051,
+      "score": 1.052,
       "factors": {
         "value_ep": 0.2119,
         "value_bp": 1.9608,
@@ -602,7 +602,7 @@
       "symbol": "600396",
       "name": "华电辽能",
       "industry": "行业-1",
-      "score": 1.026,
+      "score": 1.025,
       "factors": {
         "value_ep": 0.0026,
         "value_bp": 0.0819,
