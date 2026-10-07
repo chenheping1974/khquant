@@ -1,6 +1,6 @@
 {
   "date": "2026-09-23",
-  "updated": "2026-10-06 17:49:03.222114",
+  "updated": "2026-10-07 18:22:07.726932",
   "method": "BlackRock 4/3/2/1",
   "data_freshness": {
     "财报": "✅ 财报: 0天前 (>120天警告)",
@@ -497,7 +497,7 @@
       "symbol": "300209",
       "name": "行云科技",
       "industry": "行业-1",
-      "score": 1.087,
+      "score": 1.086,
       "factors": {
         "value_ep": NaN,
         "value_bp": 0.0305,
@@ -623,7 +623,7 @@
       "symbol": "601668",
       "name": "中国建筑",
       "industry": "行业-1",
-      "score": 1.017,
+      "score": 1.018,
       "factors": {
         "value_ep": 0.1767,
         "value_bp": 2.7778,
